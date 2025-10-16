@@ -91,11 +91,117 @@
             from {opacity: 0;}
             to {opacity: 1;}
         }
+        
+        /* 配色选择器样式 */
+        .color-picker {
+            background-color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-left: 6px solid #A78AFF;
+            transition: all 0.3s ease;
+        }
+        .color-picker:hover {
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+        .color-picker h3 {
+            margin-top: 0;
+            color: #5C4033;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .color-options {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .color-btn {
+            padding: 10px 20px;
+            border: 2px solid #D2B48C;
+            border-radius: 25px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            color: #5C4033;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+        .color-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s ease;
+        }
+        .color-btn:hover {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .color-btn:hover::before {
+            left: 100%;
+        }
+        .color-btn.active {
+            background: linear-gradient(135deg, #A78AFF 0%, #8C6BFF 100%);
+            color: white;
+            border-color: #7B5DC8;
+            box-shadow: 0 4px 12px rgba(167, 138, 255, 0.4);
+            transform: translateY(-2px);
+        }
+        .color-btn.active:hover {
+            background: linear-gradient(135deg, #8C6BFF 0%, #7B5DC8 100%);
+            box-shadow: 0 6px 16px rgba(167, 138, 255, 0.6);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .color-options {
+                gap: 8px;
+            }
+            .color-btn {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+            .color-picker {
+                padding: 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .color-options {
+                flex-direction: column;
+                align-items: center;
+            }
+            .color-btn {
+                width: 200px;
+                text-align: center;
+            }
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 </head>
 <body>
+    <div class="color-picker">
+        <h3>配色方案选择</h3>
+        <div class="color-options">
+            <button class="color-btn active" data-theme="default" onclick="changeColorTheme('default')">默认配色</button>
+            <button class="color-btn" data-theme="dark" onclick="changeColorTheme('dark')">深色主题</button>
+            <button class="color-btn" data-theme="blue" onclick="changeColorTheme('blue')">蓝色主题</button>
+            <button class="color-btn" data-theme="green" onclick="changeColorTheme('green')">绿色主题</button>
+            <button class="color-btn" data-theme="purple" onclick="changeColorTheme('purple')">紫色主题</button>
+        </div>
+    </div>
+    
     <h1>数据可视化交互展示</h1>
     
     <div class="tab">
@@ -308,6 +414,253 @@
     </div>
 
     <script>
+        // 配色方案定义
+        const colorThemes = {
+            default: {
+                bodyBg: '#FFFDD0',
+                containerBg: 'white',
+                editorBg: '#FFF9E6',
+                borderColor: '#D2B48C',
+                primaryColor: '#A78AFF',
+                textColor: '#5C4033',
+                tabBg: '#F5DEB3',
+                chartColors: ['#89CFF0', '#A78AFF', '#FFD1DC', '#A8E6CF', '#E6E6FA', '#FFB347', '#77DD77', '#B39EB5']
+            },
+            dark: {
+                bodyBg: '#2D3748',
+                containerBg: '#4A5568',
+                editorBg: '#718096',
+                borderColor: '#CBD5E0',
+                primaryColor: '#805AD5',
+                textColor: '#E2E8F0',
+                tabBg: '#4A5568',
+                chartColors: ['#63B3ED', '#68D391', '#FC8181', '#F6AD55', '#9F7AEA', '#4FD1C7', '#F687B3', '#90CDF4']
+            },
+            blue: {
+                bodyBg: '#EBF8FF',
+                containerBg: 'white',
+                editorBg: '#E6FFFA',
+                borderColor: '#90CDF4',
+                primaryColor: '#3182CE',
+                textColor: '#2D3748',
+                tabBg: '#BEE3F8',
+                chartColors: ['#3182CE', '#63B3ED', '#90CDF4', '#BEE3F8', '#E6FFFA', '#4FD1C7', '#68D391', '#9AE6B4']
+            },
+            green: {
+                bodyBg: '#F0FFF4',
+                containerBg: 'white',
+                editorBg: '#C6F6D5',
+                borderColor: '#9AE6B4',
+                primaryColor: '#38A169',
+                textColor: '#2F855A',
+                tabBg: '#C6F6D5',
+                chartColors: ['#38A169', '#68D391', '#9AE6B4', '#C6F6D5', '#F0FFF4', '#48BB78', '#81E6D9', '#4FD1C7']
+            },
+            purple: {
+                bodyBg: '#FAF5FF',
+                containerBg: 'white',
+                editorBg: '#E9D8FD',
+                borderColor: '#D6BCFA',
+                primaryColor: '#805AD5',
+                textColor: '#553C9A',
+                tabBg: '#E9D8FD',
+                chartColors: ['#805AD5', '#9F7AEA', '#B794F4', '#D6BCFA', '#E9D8FD', '#D53F8C', '#ED64A6', '#F687B3']
+            }
+        };
+
+        // 当前主题 - 从本地存储加载或使用默认值
+        let currentTheme = localStorage.getItem('colorTheme') || 'default';
+
+        // 页面加载时应用保存的主题
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('colorTheme');
+            if (savedTheme) {
+                // 更新按钮状态
+                document.querySelectorAll('.color-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                const activeBtn = document.querySelector(`[data-theme="${savedTheme}"]`);
+                if (activeBtn) {
+                    activeBtn.classList.add('active');
+                }
+                changeColorTheme(savedTheme, true);
+            }
+        });
+
+        // 切换配色主题函数
+        function changeColorTheme(theme, initialLoad = false) {
+            currentTheme = theme;
+            const themeColors = colorThemes[theme];
+            
+            // 保存到本地存储
+            if (!initialLoad) {
+                localStorage.setItem('colorTheme', theme);
+            }
+            
+            // 更新按钮状态
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-theme="${theme}"]`).classList.add('active');
+            
+            // 更新页面样式
+            document.body.style.backgroundColor = themeColors.bodyBg;
+            document.querySelectorAll('.chart-container').forEach(container => {
+                container.style.backgroundColor = themeColors.containerBg;
+            });
+            document.querySelectorAll('.data-editor').forEach(editor => {
+                editor.style.backgroundColor = themeColors.editorBg;
+                editor.style.borderLeftColor = themeColors.borderColor;
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.style.backgroundColor = themeColors.tabBg;
+                tab.style.borderColor = themeColors.borderColor;
+            });
+            document.querySelectorAll('h1, h2, h3').forEach(heading => {
+                heading.style.color = themeColors.textColor;
+            });
+            document.querySelectorAll('.data-input label').forEach(label => {
+                label.style.color = themeColors.textColor;
+            });
+            document.querySelectorAll('.update-btn').forEach(btn => {
+                btn.style.backgroundColor = themeColors.primaryColor;
+            });
+            document.querySelectorAll('.update-btn:hover').forEach(btn => {
+                btn.style.backgroundColor = themeColors.primaryColor + 'DD';
+            });
+            
+            // 更新所有图表颜色
+            updateAllChartsColors(themeColors.chartColors);
+        }
+
+        // 更新所有图表颜色
+        function updateAllChartsColors(colors) {
+            const themeColors = colorThemes[currentTheme];
+            
+            // 折线图
+            lineChart.setOption({
+                color: [colors[0], colors[1]],
+                series: [
+                    { lineStyle: { width: 3 } },
+                    { lineStyle: { width: 3 } }
+                ]
+            }, true);
+            
+            // 柱形图
+            barChart.setOption({
+                color: colors[0],
+                series: [{ itemStyle: { color: colors[0] } }]
+            }, true);
+            
+            // 饼图
+            pieChart.setOption({
+                color: colors,
+                series: [{
+                    itemStyle: {
+                        borderColor: themeColors.containerBg || 'white',
+                        borderWidth: 2
+                    }
+                }]
+            }, true);
+            
+            // 散点图
+            scatterChart.setOption({
+                color: colors[1],
+                series: [{
+                    itemStyle: {
+                        color: colors[1],
+                        opacity: 0.8
+                    }
+                }]
+            }, true);
+            
+            // 雷达图
+            radarChart.setOption({
+                color: [colors[0], colors[1], colors[2]],
+                series: [{
+                    areaStyle: {
+                        opacity: 0.3
+                    },
+                    lineStyle: {
+                        width: 2
+                    }
+                }]
+            }, true);
+            
+            // 箱型图
+            boxChart.setOption({
+                series: [{
+                    data: [
+                        {
+                            itemStyle: {
+                                color: colors[0],
+                                borderColor: themeColors.textColor || '#5C4033'
+                            }
+                        },
+                        {
+                            itemStyle: {
+                                color: colors[1],
+                                borderColor: themeColors.textColor || '#5C4033'
+                            }
+                        }
+                    ]
+                }]
+            }, true);
+            
+            // 堆积面积图
+            areaChart.setOption({
+                series: [
+                    {
+                        lineStyle: {
+                            width: 3,
+                            color: colors[0]
+                        },
+                        areaStyle: {
+                            color: colors[0],
+                            opacity: 0.6
+                        }
+                    },
+                    {
+                        areaStyle: {
+                            color: colors[1],
+                            opacity: 0.8
+                        }
+                    },
+                    {
+                        areaStyle: {
+                            color: colors[2],
+                            opacity: 0.8
+                        }
+                    }
+                ]
+            }, true);
+            
+            // 直方图
+            histogramChart.setOption({
+                series: [{
+                    itemStyle: {
+                        color: colors[3],
+                        borderColor: themeColors.textColor || '#5C4033',
+                        borderWidth: 1
+                    },
+                    emphasis: {
+                        itemStyle: {
+                            color: colors[1]
+                        }
+                    }
+                }]
+            }, true);
+            
+            // 条形图
+            barGraphChart.setOption({
+                series: [{
+                    itemStyle: {
+                        color: colors[0]
+                    }
+                }]
+            }, true);
+        }
+
         // 初始化所有图表
         var lineChart = echarts.init(document.getElementById('lineChart'));
         var barChart = echarts.init(document.getElementById('barChart'));
