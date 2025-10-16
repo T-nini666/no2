@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matplotlib数据可视化交互页面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: #FFF8E1; /* 奶油黄色背景 */
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1400px;
+            min-height: 95vh;
+            background: #FFF8E1;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            margin: 20px auto;
+            border: 3px solid #D7CCC8;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #8B7355, #A68A64); /* 奶油黄渐变 */
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #D7CCC8; /* 浅棕色导航栏 */
+            overflow-x: auto;
+            scrollbar-width: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 20px;
+            background: #D7CCC8;
+            border: none;
+            color: #5D4037; /* 深棕色文字 */
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            font-weight: bold;
+            border-right: 1px solid #BCAAA4;
+        }
+
+        .tab-btn:hover {
+            background: #BCAAA4;
+            transform: translateY(-2px);
+        }
+
+        .tab-btn.active {
+            background: #8D6E63;
+            color: white;
+            box-shadow: inset 0 -4px 0 #6D4C41;
+        }
+
+        .content-area {
+            display: flex;
+            min-height: 600px;
+        }
+
+        .chart-container {
+            flex: 3;
+            padding: 30px;
+            background: #FFF8E1; /* 奶油黄背景 */
+        }
+
+        .control-panel {
+            flex: 1;
+            background: #F5F5F5; /* 浅灰色背景 */
+            padding: 30px;
+            border-left: 3px solid #D7CCC8; /* 浅棕色边框 */
+            min-width: 300px;
+            box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-title {
+            font-size: 1.8em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .chart-wrapper {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            height: 500px;
+            border: 2px solid #D7CCC8; /* 浅棕色边框 */
+        }
+
+        .control-section {
+            margin-bottom: 30px;
+        }
+
+        .control-title {
+            font-size: 1.3em;
+            color: #5D4037; /* 深棕色文字 */
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #8D6E63; /* 棕色边框 */
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #34495e;
+            font-weight: bold;
+        }
+
+        .control-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .control-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .control-textarea {
+            width: 100%;
+            height: 80px;
+            padding: 12px;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #8D6E63; /* 棕色主按钮 */
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #6D4C41; /* 深棕色悬停 */
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #A1887F; /* 浅棕色次按钮 */
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #8D6E63; /* 棕色悬停 */
+        }
+
+        .data-sample {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-size: 12px;
+        }
+
+        .data-sample h4 {
+            color: #856404;
+            margin-bottom: 8px;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .content-area {
+                flex-direction: column;
+            }
+            
+            .control-panel {
+                border-left: none;
+                border-top: 3px solid #bdc3c7;
+            }
+            
+            .nav-tabs {
+                flex-wrap: wrap;
+            }
+            
+            .tab-btn {
+                min-width: 100px;
+                font-size: 14px;
+                padding: 12px 15px;
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Matplotlib数据可视化交互页面</h1>
+            <p>基于第2章.ipynb的完整可视化解决方案</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="showTab('line')">折线图</button>
+            <button class="tab-btn" onclick="showTab('bar')">柱形图</button>
+            <button class="tab-btn" onclick="showTab('barh')">条形图</button>
+            <button class="tab-btn" onclick="showTab('area')">面积图</button>
+            <button class="tab-btn" onclick="showTab('histogram')">直方图</button>
+            <button class="tab-btn" onclick="showTab('pie')">饼图</button>
+            <button class="tab-btn" onclick="showTab('scatter')">散点图</button>
+            <button class="tab-btn" onclick="showTab('box')">箱形图</button>
+            <button class="tab-btn" onclick="showTab('radar')">雷达图</button>
+            <button class="tab-btn" onclick="showTab('errorbar')">误差棒图</button>
+        </div>
+
+        <div class="content-area">
+            <!-- 折线图 -->
+            <div id="line" class="tab-content active">
+                <div class="chart-container">
+                    <h2 class="chart-title">📈 折线图 - 未来15天温度趋势</h2>
+                    <div class="chart-wrapper" id="lineChart"></div>
+                </div>
+                <div class="control-panel">
+                    <div class="control-section">
+                        <h3 class="control-title">数据控制</h3>
+                        <div class="control-group">
+                            <label class="control-label">最高气温 (逗号分隔):</label>
+                            <textarea class="control-textarea" id="lineMaxTemp">32,33,34,34,33,31,30,29,30,29,26,23,21,25,31</textarea>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">最低气温 (逗号分隔):</label>
+                            <textarea class="control-textarea" id="lineMinTemp">19,19,20,22,22,21,22,16,18,18,17,14,15,16,16</textarea>
+                        </div>
+                        <div class="data-sample">
+                            <h4>数据格式说明</h4>
+                            <p>请输入15个数值，用逗号分隔，例如：32,33,34,...</p>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="updateLineChart()">更新图表</button>
+                        <button class="btn btn-secondary" onclick="resetLineData()">重置数据</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 柱形图 -->
+            <div id="bar" class="tab-content">
+                <div class="chart-container">
+                    <h2 class="chart-title">📊 柱形图 - 阿里巴巴GMV数据</h2>
+                    <div class="chart-wrapper" id="barChart"></div>
+                </div>
+                <div class="control-panel">
+                    <div class="control-section">
+                        <h3 class="control-title">数据控制</h3>
+                        <div class="control-group">
+                            <label class="control-label">GMV数据 (逗号分隔):</label>
+                            <textarea class="control-textarea" id="barData">10770,16780,24440,30920,37670,48200,57270</textarea>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">年份标签:</label>
+                            <input type="text" class="control-input" id="barLabels" value="FY2013,FY2014,FY2015,FY2016,FY2017,FY2018,FY2019">
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="updateBarChart()">更新图表</button>
+                        <button class="btn btn-secondary" onclick="resetBarData()">重置数据</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 条形图 -->
+            <div id="barh" class="tab-content">
+                <div class="chart-container">
+                    <h2 class="chart-title">📋 条形图 - 网购替代率</h2>
+                    <div class="chart-wrapper" id="barhChart"></div>
+                </div>
+                <div class="control-panel">
+                    <div class="control-section">
+                        <h3 class="control-title">数据控制</h3>
+                        <div class="control-group">
+                            <label class="control-label">替代率数据:</label>
+                            <textarea class="control-textarea" id="barhData">0.959,0.951,0.935,0.924,0.893,0.892,0.865,0.863,0.860,0.856,0.854,0.835,0.826,0.816,0.798,0.765,0.763,0.67</textarea>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="updateBarhChart()">更新图表</button>
+                        <button class="btn btn-secondary" onclick="resetBarhData()">重置数据</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 面积图 -->
+            <div id="area" class="tab-content">
+                <div class="chart-container">
+                    <h2 class="chart-title">📈 堆积面积图 - 物流费用统计</h2>
+                    <div class="chart-wrapper" id="areaChart"></div>
+                </div>
+                <div class="control-panel">
+                    <div class="control-section">
+                        <h3 class="control-title">数据控制</h3>
+                        <div class="control-group">
+                            <label class="control-label">公司A数据:</label>
+                            <input type="text" class="control-input" id="areaDataA" value="198,215,245,222,200,236,201,253,236,200,266,290">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">公司B数据:</label>
+                            <input type="text" class="control-input" id="areaDataB" value="203,236,200,236,269,216,298,333,301,349,360,368">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">公司C数据:</label>
+                            <input type="text" class="control-input" id="areaDataC" value="185,205,226,199,238,200,250,209,246,219,253,288">
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="updateAreaChart()">更新图表</button>
+                        <button class="btn btn-secondary" onclick="resetAreaData()">重置数据</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 直方图 -->
+            <div id="histogram" class="tab-content">
+                <div class="chart-container">
+                    <h2 class="chart-title">📊 直方图 - 成绩分布</h2>
+                    <div class="chart-wrapper" id="histogramChart"></div>
+                </div>
+                <div class="control-panel">
+                    <div class="control-section">
+                        <h3 class="control-title">数据控制</h3>
+                        <div class="control-group">
+                            <label class="control-label">成绩数据:</label>
+                            <textarea class="control-textarea" id="histogramData">62,75,88,59,94,65,72,68,81,84,79,92,76,63,71,69,78,85,90,67,73,88,91,65,72,80,85,62,76,91,88,85,79,68,72,75,83,81,77,90,96,65,74,76,82,85,88,91,73,69</textarea>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">分组数量:</label>
+                            <input type="number" class="control-input" id="histogramBins" value="10" min="5" max="20">
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="updateHistogramChart()">更新图表</button>
+                        <button class="btn btn-secondary" onclick="resetHistogramData()">重置数据</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 饼图 -->
+            <div id="pie" class="tab-content">
+                <div class="chart-container">
+                    <h2 class="chart-title">🥧 饼图 - 支付宝月账单</h2>
+                    <div class="chart-wrapper" id="pieChart"></div>
+                </div>
+                <div class="control-panel">
+                    <div class="control-section">
+                        <h3 class="control-title">数据控制</h3>
+                        <div class="control-group">
+                            <label class="control-label">金额数据:</label>
+                            <textarea class="control-textarea" id="pieData">800,100,1000,200,300,200,200,200</textarea>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">分类标签:</label>
+                            <input type="text" class="control-input" id="pieLabels" value="购物,人情往来,餐饮美食,通信物流,生活日用,交通出行,休闲娱乐,其他">
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="updatePieChart()">更新图表</button>
+                        <button class="btn btn-secondary" onclick="resetPieData()">重置数据</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 散点图 -->
+            <div id="scatter" class="tab-content">
+                <div class="chart-container">
+                    <h2 class="chart-title">🔵 散点图 - 速度与制动距离</h2>
+                    <div class="chart-wrapper" id="scatterChart"></div>
+                </div>
+                <div class="control-panel">
+                    <div class="control-section">
+                        <h3 class="control-title">数据控制</h3>
+                        <div class="control-group">
+                            <label class="control-label">散点数据 (x,y;格式):</label>
+                            <textarea class="control-textarea" id="scatterData">10,0.5;20,2.0;30,4.4;40,7.9;50,12.3;60,17.7;70,24.1;80,31.5;90,39.9;100,49.2;110,59.5;120,70.8;130,83.1;140,96.4;150,110.7;160,126.0;170,142.2;180,159.4;190,177.6;200,196.8</textarea>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="updateScatterChart()">更新图表</button>
+                        <button class="btn btn-secondary" onclick="resetScatterData()">重置数据</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 箱形图 -->
+            <div id="box" class="tab-content">
+                <div class="chart-container">
+                    <h2 class="chart-title">📦 箱形图 - 发电量统计</h2>
+                    <div class="chart-wrapper" id="boxChart"></div>
+                </div>
+                <div class="control-panel">
+                    <div class="control-section">
+                        <h3 class="control-title">数据控制</h3>
+                        <div class="control-group">
+                            <label class="control-label">2018年数据:</label>
+                            <textarea class="control-textarea" id="boxData2018">5200,5254.5,5283.4,5107.8,5443.3,5550.6,6400.2,6404.9,5483.1,5330.2,5543,6199.9</textarea>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">2017年数据:</label>
+                            <textarea class="control-textarea" id="boxData2017">4605.2,4710.3,5168.9,4767.2,4947,5203,6047.4,5945.5,5219.6,5038.1,5196.3,5698.6</textarea>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="updateBoxChart()">更新图表</button>
+                        <button class="btn btn-secondary" onclick="resetBoxData()">重置数据</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 雷达图 -->
+            <div id="radar" class="tab-content">
+                <div class="chart-container">
+                    <h2 class="chart-title">🎯 雷达图 - 职业兴趣测试</h2>
+                    <div class="chart-wrapper" id="radarChart"></div>
+                </div>
+                <div class="control-panel">
+                    <div class="control-section">
+                        <h3 class="control-title">数据控制</h3>
+                        <div class="control-group">
+                            <label class="control-label">测试1数据:</label>
+                            <input type="text" class="control-input" id="radarData1" value="0.40,0.32,0.35,0.30,0.30,0.88">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">测试2数据:</label>
+                            <input type="text" class="control-input" id="radarData2" value="0.85,0.35,0.30,0.40,0.40,0.30">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">测试3数据:</label>
+                            <input type="text" class="control-input" id="radarData3" value="0.43,0.89,0.30,0.28,0.22,0.30">
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="updateRadarChart()">更新图表</button>
+                        <button class="btn btn-secondary" onclick="resetRadarData()">重置数据</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 误差棒图 -->
+            <div id="errorbar" class="tab-content">
+                <div class="chart-container">
+                    <h2 class="chart-title">📏 误差棒图 - 细根生物量</h2>
+                    <div class="chart-wrapper" id="errorbarChart"></div>
+                </div>
+                <div class="control-panel">
+                    <div class="control-section">
+                        <h3 class="control-title">数据控制</h3>
+                        <div class="control-group">
+                            <label class="control-label">树种1数据:</label>
+                            <input type="text" class="control-input" id="errorbarData1" value="2.04,1.57,1.63">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">树种2数据:</label>
+                            <input type="text" class="control-input" id="errorbarData2" value="1.69,1.61,1.64">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">误差数据:</label>
+                            <input type="text" class="control-input" id="errorbarError" value="0.16,0.08,0.10,0.27,0.14,0.14">
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="updateErrorbarChart()">更新图表</button>
+                        <button class="btn btn-secondary" onclick="resetErrorbarData()">重置数据</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="chart-functions.js"></script>
+</body>
+</html>
