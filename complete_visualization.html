@@ -133,7 +133,7 @@
         }
 
         .chart-side {
-            flex: 3;
+            flex: 2;
             display: flex;
             flex-direction: column;
             min-width: 0;
@@ -144,6 +144,7 @@
             display: flex;
             flex-direction: column;
             min-width: 0;
+            min-width: 400px;
         }
 
         .editor-title {
@@ -180,13 +181,118 @@
         }
 
         .form-group input,
-        .form-group select {
+        .form-group select,
+        .form-group textarea {
             width: 100%;
             padding: 10px;
             border: 2px solid #D7CCC8;
             border-radius: 6px;
             font-size: 14px;
             transition: border-color 0.3s;
+            resize: vertical;
+            min-height: 40px;
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            font-family: monospace;
+        }
+
+        .input-hint {
+            font-size: 12px;
+            color: #795548;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .color-picker {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 5px 0;
+        }
+
+        .color-picker span {
+            min-width: 80px;
+            font-size: 13px;
+            color: #5D4037;
+        }
+
+        .color-picker input[type="color"] {
+            width: 40px;
+            height: 30px;
+            border: 2px solid #D7CCC8;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .editor-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .update-btn, .reset-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .update-btn {
+            background: #8D6E63;
+            color: white;
+        }
+
+        .update-btn:hover {
+            background: #6D4C41;
+            transform: translateY(-2px);
+        }
+
+        .reset-btn {
+            background: #BDBDBD;
+            color: #424242;
+        }
+
+        .reset-btn:hover {
+            background: #9E9E9E;
+            transform: translateY(-2px);
+        }
+
+        /* 数据验证样式 */
+        .form-group.error input,
+        .form-group.error textarea {
+            border-color: #F44336;
+            background-color: #FFEBEE;
+        }
+
+        .form-group.success input,
+        .form-group.success textarea {
+            border-color: #4CAF50;
+            background-color: #E8F5E8;
+        }
+
+        .validation-message {
+            font-size: 12px;
+            margin-top: 5px;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+
+        .validation-message.error {
+            color: #D32F2F;
+            background-color: #FFEBEE;
+        }
+
+        .validation-message.success {
+            color: #388E3C;
+            background-color: #E8F5E8;
         }
 
         .form-group input:focus,
@@ -2029,7 +2135,209 @@
         // 页面加载时初始化第一个图表
         window.onload = function() {
             initChart('line');
+            setupDataEditors();
         };
+
+        // 数据编辑器增强功能
+        function setupDataEditors() {
+            // 为所有输入框添加实时验证
+            const inputs = document.querySelectorAll('input[type="text"], textarea');
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    validateInput(this);
+                });
+                input.addEventListener('blur', function() {
+                    formatInput(this);
+                });
+            });
+
+            // 为颜色选择器添加实时预览
+            const colorInputs = document.querySelectorAll('input[type="color"]');
+            colorInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    const formGroup = this.closest('.form-group');
+                    if (formGroup) {
+                        formGroup.style.borderLeftColor = this.value;
+                    }
+                });
+            });
+
+            // 添加键盘快捷键
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'Enter') {
+                    const activeTab = document.querySelector('.tab-btn.active');
+                    if (activeTab) {
+                        const chartType = activeTab.getAttribute('data-chart');
+                        const updateFunction = window['update' + chartType.charAt(0).toUpperCase() + chartType.slice(1) + 'Chart'];
+                        if (updateFunction) {
+                            updateFunction();
+                        }
+                    }
+                }
+            });
+        }
+
+        // 输入验证函数
+        function validateInput(input) {
+            const value = input.value.trim();
+            const formGroup = input.closest('.form-group');
+            
+            // 移除之前的验证消息
+            const existingMessage = formGroup.querySelector('.validation-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+
+            // 验证数字输入
+            if (input.id.includes('Data') || input.id.includes('Range')) {
+                const values = value.split(',').map(v => v.trim()).filter(v => v);
+                
+                if (values.length === 0 && value !== '') {
+                    showValidationMessage(formGroup, '请输入有效的逗号分隔值', 'error');
+                    return false;
+                }
+
+                // 检查是否为数字或数字范围
+                for (const val of values) {
+                    if (val.includes('-')) {
+                        // 范围验证
+                        const rangeParts = val.split('-');
+                        if (rangeParts.length !== 2 || isNaN(rangeParts[0]) || isNaN(rangeParts[1])) {
+                            showValidationMessage(formGroup, '范围格式应为：最小值-最大值', 'error');
+                            return false;
+                        }
+                    } else if (isNaN(val)) {
+                        showValidationMessage(formGroup, '请输入有效的数字', 'error');
+                        return false;
+                    }
+                }
+
+                showValidationMessage(formGroup, '格式正确', 'success');
+                return true;
+            }
+
+            return true;
+        }
+
+        // 显示验证消息
+        function showValidationMessage(formGroup, message, type) {
+            const existingMessage = formGroup.querySelector('.validation-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `validation-message ${type}`;
+            messageDiv.textContent = message;
+            formGroup.appendChild(messageDiv);
+
+            formGroup.classList.remove('error', 'success');
+            formGroup.classList.add(type);
+        }
+
+        // 输入格式化函数
+        function formatInput(input) {
+            const value = input.value.trim();
+            if (value.includes(',')) {
+                // 格式化逗号分隔的数字
+                const formatted = value.split(',')
+                    .map(v => v.trim())
+                    .filter(v => v)
+                    .join(', ');
+                input.value = formatted;
+            }
+        }
+
+        // 自动更新功能（可选）
+        function enableAutoUpdate(input, chartType) {
+            let timeoutId;
+            input.addEventListener('input', function() {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => {
+                    const updateFunction = window['update' + chartType.charAt(0).toUpperCase() + chartType.slice(1) + 'Chart'];
+                    if (updateFunction && validateInput(input)) {
+                        updateFunction();
+                    }
+                }, 1000);
+            });
+        }
+
+        // 批量数据编辑功能
+        function showBatchEditor(chartType) {
+            const editor = document.createElement('div');
+            editor.className = 'batch-editor';
+            editor.innerHTML = `
+                <div class="batch-editor-overlay">
+                    <div class="batch-editor-content">
+                        <h3>批量数据编辑 - ${chartType}</h3>
+                        <textarea id="batchData" placeholder="每行一个数据值"></textarea>
+                        <div class="batch-controls">
+                            <button onclick="applyBatchData('${chartType}')">应用</button>
+                            <button onclick="closeBatchEditor()">取消</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(editor);
+        }
+
+        function applyBatchData(chartType) {
+            const batchData = document.getElementById('batchData').value;
+            const dataInput = document.querySelector(`#${chartType}Data`);
+            if (dataInput) {
+                const formattedData = batchData.split('
+')
+                    .map(line => line.trim())
+                    .filter(line => line)
+                    .join(', ');
+                dataInput.value = formattedData;
+                validateInput(dataInput);
+            }
+            closeBatchEditor();
+        }
+
+        function closeBatchEditor() {
+            const editor = document.querySelector('.batch-editor');
+            if (editor) {
+                editor.remove();
+            }
+        }
     </script>
+
+    <style>
+        /* 批量编辑器样式 */
+        .batch-editor-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .batch-editor-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 500px;
+            max-width: 90%;
+        }
+
+        .batch-editor-content textarea {
+            width: 100%;
+            height: 200px;
+            margin: 15px 0;
+        }
+
+        .batch-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+    </style>
 </body>
 </html>
