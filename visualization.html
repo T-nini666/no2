@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html>
+<head>
+=======
+    <title>数据可视化交互页面</title>
+=======
+    <title>数据可视化交互页面</title>
+    <style>
+        body {
+            background-color: #FFFDD0; /* 奶油黄色 */
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .chart-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 20px;
+        }
+        .chart-wrapper {
+            flex: 2;
+        }
+        .data-editor {
+            flex: 1;
+            background-color: #FFF9E6;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 1px solid #D2B48C;
+        }
+        .data-input {
+            margin-bottom: 10px;
+        }
+        .data-input label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #5C4033;
+        }
+        .data-input input, .data-input textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #D2B48C;
+            border-radius: 4px;
+        }
+        .update-btn {
+            background-color: #A78AFF;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .update-btn:hover {
+            background-color: #8C6BFF;
+        }
+        h1, h2 {
+            color: #5C4033; /* 深棕色 */
+        }
+        .tab {
+            overflow: hidden;
+            border: 1px solid #D2B48C;
+            background-color: #F5DEB3;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 12px 16px;
+            transition: 0.3s;
+            font-size: 16px;
+        }
+        .tab button:hover {
+            background-color: #D2B48C;
+        }
+        .tab button.active {
+            background-color: #D2B48C;
+        }
+        .tabcontent {
+            display: none;
+            animation: fadeEffect 0.5s;
+        }
+        @keyframes fadeEffect {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+</head>
+<body>
+    <h1>数据可视化交互展示</h1>
+    
+    <div class="tab">
+        <button class="tablinks active" onclick="openChart(event, 'line')">折线图</button>
+        <button class="tablinks" onclick="openChart(event, 'bar')">柱形图</button>
+        <button class="tablinks" onclick="openChart(event, 'pie')">饼图</button>
+        <button class="tablinks" onclick="openChart(event, 'scatter')">散点图</button>
+        <button class="tablinks" onclick="openChart(event, 'radar')">雷达图</button>
+        <button class="tablinks" onclick="openChart(event, 'box')">箱型图</button>
+        <button class="tablinks" onclick="openChart(event, 'area')">堆积面积图</button>
+        <button class="tablinks" onclick="openChart(event, 'histogram')">直方图</button>
+        <button class="tablinks" onclick="openChart(event, 'bargraph')">条形图</button>
+    </div>
+
+    <div id="line" class="tabcontent" style="display: block;">
+        <div class="chart-container">
+            <div class="chart-wrapper">
+                <h2>未来15天最高气温和最低气温</h2>
+                <div id="lineChart" style="width: 100%; height: 500px;"></div>
+            </div>
+            <div class="data-editor">
+                <h3>数据编辑</h3>
+                <div class="data-input">
+                    <label for="lineMaxTemp">最高气温 (逗号分隔):</label>
+                    <textarea id="lineMaxTemp" rows="3">32,33,34,34,33,31,30,29,30,29,26,23,21,25,31</textarea>
+                </div>
+                <div class="data-input">
+                    <label for="lineMinTemp">最低气温 (逗号分隔):</label>
+                    <textarea id="lineMinTemp" rows="3">19,19,20,22,22,21,22,16,18,18,17,14,15,16,16</textarea>
+                </div>
+                <button class="update-btn" onclick="updateLineChart()">更新图表</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="bar" class="tabcontent">
+        <div class="chart-container">
+            <div class="chart-wrapper">
+                <h2>2013-2019财年阿里巴巴GMV</h2>
+                <div id="barChart" style="width: 100%; height: 500px;"></div>
+            </div>
+            <div class="data-editor">
+                <h3>数据编辑</h3>
+                <div class="data-input">
+                    <label for="barData">GMV数据 (逗号分隔):</label>
+                    <textarea id="barData" rows="7">10770,16780,24440,30920,37670,48200,57270</textarea>
+                </div>
+                <div class="data-input">
+                    <label for="barLabels">年份标签 (逗号分隔):</label>
+                    <input type="text" id="barLabels" value="FY2013,FY2014,FY2015,FY2016,FY2017,FY2018,FY2019">
+                </div>
+                <button class="update-btn" onclick="updateBarChart()">更新图表</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="pie" class="tabcontent">
+        <div class="chart-container">
+            <div class="chart-wrapper">
+                <h2>支付宝月账单</h2>
+                <div id="pieChart" style="width: 100%; height: 500px;"></div>
+            </div>
+            <div class="data-editor">
+                <h3>数据编辑</h3>
+                <div class="data-input">
+                    <label for="pieValues">金额 (逗号分隔):</label>
+                    <textarea id="pieValues" rows="4">800,100,1000,200,300,200,200,200</textarea>
+                </div>
+                <div class="data-input">
+                    <label for="pieLabels">分类 (逗号分隔):</label>
+                    <input type="text" id="pieLabels" value="购物,人情往来,餐饮美食,通信物流,生活日用,交通出行,休闲娱乐,其他">
+                </div>
+                <button class="update-btn" onclick="updatePieChart()">更新图表</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="scatter" class="tabcontent">
+        <div class="chart-container">
+            <div class="chart-wrapper">
+                <h2>汽车速度与制动距离</h2>
+                <div id="scatterChart" style="width: 100%; height: 500px;"></div>
+            </div>
+            <div class="data-editor">
+                <h3>数据编辑</h3>
+                <div class="data-input">
+                    <label for="scatterData">数据 (格式: x1,y1;x2,y2):</label>
+                    <textarea id="scatterData" rows="10">10,0.5;20,2.0;30,4.4;40,7.9;50,12.3;60,17.7;70,24.1;80,31.5;90,39.9;100,49.2;110,59.5;120,70.8;130,83.1;140,96.4;150,110.7;160,126.0;170,142.2;180,159.4;190,177.6;200,196.8</textarea>
+                </div>
+                <button class="update-btn" onclick="updateScatterChart()">更新图表</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="radar" class="tabcontent">
+        <div class="chart-container">
+            <div class="chart-wrapper">
+                <h2>霍兰德职业兴趣测试</h2>
+                <div id="radarChart" style="width: 100%; height: 500px;"></div>
+            </div>
+            <div class="data-editor">
+                <h3>数据编辑</h3>
+                <div class="data-input">
+                    <label for="radarData1">测试1数据 (逗号分隔):</label>
+                    <input type="text" id="radarData1" value="0.40,0.32,0.35,0.30,0.30,0.88">
+                </div>
+                <div class="data-input">
+                    <label for="radarData2">测试2数据 (逗号分隔):</label>
+                    <input type="text" id="radarData2" value="0.85,0.35,0.30,0.40,0.40,0.30">
+                </div>
+                <div class="data-input">
+                    <label for="radarData3">测试3数据 (逗号分隔):</label>
+                    <input type="text" id="radarData3" value="0.43,0.89,0.30,0.28,0.22,0.30">
+                </div>
+                <button class="update-btn" onclick="updateRadarChart()">更新图表</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="box" class="tabcontent">
+        <div class="chart-container">
+            <div class="chart-wrapper">
+                <h2>四个季度不同部门销售业绩对比</h2>
+                <div id="boxChart" style="width: 100%; height: 500px;"></div>
+            </div>
+            <div class="data-editor">
+                <h3>数据编辑</h3>
+                <div class="data-input">
+                    <label for="boxDataSales">销售部数据 (逗号分隔):</label>
+                    <textarea id="boxDataSales" rows="3">120,145,132,150,138,142,155,128,135,140,148,152</textarea>
+                </div>
+                <div class="data-input">
+                    <label for="boxDataMarketing">市场部数据 (逗号分隔):</label>
+                    <textarea id="boxDataMarketing" rows="3">95,110,105,115,100,108,112,98,102,107,113,118</textarea>
+                </div>
+                <button class="update-btn" onclick="updateBoxChart()">更新图表</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="area" class="tabcontent">
+        <div class="chart-container">
+            <div class="chart-wrapper">
+                <h2>2018-2022年中国新能源汽车市场份额</h2>
+                <div id="areaChart" style="width: 100%; height: 500px;"></div>
+            </div>
+            <div class="data-editor">
+                <h3>数据编辑</h3>
+                <div class="data-input">
+                    <label for="areaDataEV">纯电动汽车 (逗号分隔):</label>
+                    <textarea id="areaDataEV" rows="2">45,58,67,75,82</textarea>
+                </div>
+                <div class="data-input">
+                    <label for="areaDataPHEV">插电式混合动力 (逗号分隔):</label>
+                    <textarea id="areaDataPHEV" rows="2">30,35,40,48,55</textarea>
+                </div>
+                <div class="data-input">
+                    <label for="areaDataHEV">普通混合动力 (逗号分隔):</label>
+                    <textarea id="areaDataHEV" rows="2">25,30,35,42,48</textarea>
+                </div>
+                <div class="data-input">
+                    <label for="areaLabels">年份标签 (逗号分隔):</label>
+                    <input type="text" id="areaLabels" value="2018,2019,2020,2021,2022">
+                </div>
+                <button class="update-btn" onclick="updateAreaChart()">更新图表</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="histogram" class="tabcontent">
+        <div class="chart-container">
+            <div class="chart-wrapper">
+                <h2>某高校学生成绩分布</h2>
+                <div id="histogramChart" style="width: 100%; height: 500px;"></div>
+            </div>
+            <div class="data-editor">
+                <h3>数据编辑</h3>
+                <div class="data-input">
+                    <label for="histogramData">学生成绩数据 (逗号分隔):</label>
+                    <textarea id="histogramData" rows="6">62,75,88,59,94,65,72,68,81,84,79,92,76,63,71,69,78,85,90,67,73,88,91,65,72,80,85,62,76,91,88,85,79,68,72,75,83,81,77,90,96,65,74,76,82,85,88,91,73,69</textarea>
+                </div>
+                <div class="data-input">
+                    <label for="histogramBins">分组数量:</label>
+                    <input type="number" id="histogramBins" value="10" min="5" max="20">
+                </div>
+                <button class="update-btn" onclick="updateHistogramChart()">更新图表</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="bargraph" class="tabcontent">
+        <div class="chart-container">
+            <div class="chart-wrapper">
+                <h2>2023年各省GDP对比</h2>
+                <div id="barGraphChart" style="width: 100%; height: 500px;"></div>
+            </div>
+            <div class="data-editor">
+                <h3>数据编辑</h3>
+                <div class="data-input">
+                    <label for="barGraphData">GDP数据 (逗号分隔):</label>
+                    <textarea id="barGraphData" rows="3">12.91,12.29,8.74,7.77,6.13,5.67,5.37,5.31</textarea>
+                </div>
+                <div class="data-input">
+                    <label for="barGraphLabels">省份标签 (逗号分隔):</label>
+                    <input type="text" id="barGraphLabels" value="广东,江苏,山东,浙江,河南,四川,湖北,福建">
+                </div>
+                <button class="update-btn" onclick="updateBarGraphChart()">更新图表</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化所有图表
+        var lineChart = echarts.init(document.getElementById('lineChart'));
+        var barChart = echarts.init(document.getElementById('barChart'));
+        var pieChart = echarts.init(document.getElementById('pieChart'));
+        var scatterChart = echarts.init(document.getElementById('scatterChart'));
+        var radarChart = echarts.init(document.getElementById('radarChart'));
+        var boxChart = echarts.init(document.getElementById('boxChart'));
+        var areaChart = echarts.init(document.getElementById('areaChart'));
+        var histogramChart = echarts.init(document.getElementById('histogramChart'));
+        var barGraphChart = echarts.init(document.getElementById('barGraphChart'));
+
+        // 设置图表选项
+        lineChart.setOption({
+            title: { text: '未来15天最高气温和最低气温' },
+            xAxis: { data: Array.from({length: 15}, (_, i) => i+4) },
+            yAxis: {},
+            series: [
+                { name: '最高气温', type: 'line', data: [32,33,34,34,33,31,30,29,30,29,26,23,21,25,31] },
+                { name: '最低气温', type: 'line', data: [19,19,20,22,22,21,22,16,18,18,17,14,15,16,16] }
+            ]
+        });
+
+        barChart.setOption({
+            title: { text: '2013-2019财年阿里巴巴GMV' },
+            xAxis: { data: ["FY2013","FY2014","FY2015","FY2016","FY2017","FY2018","FY2019"] },
+            yAxis: {},
+            series: [{ type: 'bar', data: [10770,16780,24440,30920,37670,48200,57270] }]
+        });
+
+        pieChart.setOption({
+            title: { text: '支付宝月账单' },
+            series: [{
+                type: 'pie',
+                data: [
+                    { value: 800, name: '购物' },
+                    { value: 100, name: '人情往来' },
+                    { value: 1000, name: '餐饮美食' },
+                    { value: 200, name: '通信物流' },
+                    { value: 300, name: '生活日用' },
+                    { value: 200, name: '交通出行' },
+                    { value: 200, name: '休闲娱乐' },
+                    { value: 200, name: '其他' }
+                ]
+            }]
+        });
+
+        scatterChart.setOption({
+            title: { text: '汽车速度与制动距离' },
+            xAxis: { name: '速度(km/h)' },
+            yAxis: { name: '制动距离(m)' },
+            series: [{
+                type: 'scatter',
+                symbolSize: 10,
+                data: [
+                    [10,0.5], [20,2.0], [30,4.4], [40,7.9], [50,12.3],
+                    [60,17.7], [70,24.1], [80,31.5], [90,39.9], [100,49.2],
+                    [110,59.5], [120,70.8], [130,83.1], [140,96.4], [150,110.7],
+                    [160,126.0], [170,142.2], [180,159.4], [190,177.6], [200,196.8]
+                ]
+            }]
+        });
+
+        radarChart.setOption({
+            title: { text: '霍兰德职业兴趣测试' },
+            radar: {
+                indicator: [
+                    { name: '研究型(I)', max: 1 },
+                    { name: '艺术型(A)', max: 1 },
+                    { name: '社会型(S)', max: 1 },
+                    { name: '企业型(E)', max: 1 },
+                    { name: '传统型(C)', max: 1 },
+                    { name: '现实型(R)', max: 1 }
+                ]
+            },
+            series: [{
+                type: 'radar',
+                data: [
+                    { value: [0.40,0.32,0.35,0.30,0.30,0.88], name: '测试1' },
+                    { value: [0.85,0.35,0.30,0.40,0.40,0.30], name: '测试2' },
+                    { value: [0.43,0.89,0.30,0.28,0.22,0.30], name: '测试3' }
+                ]
+            }]
+        });
+
+        // 定义柔和配色方案
+        const colors = {
+            happyBlue: '#89CFF0',
+            irisPurple: '#A78AFF',
+            peach: '#FFD1DC',
+            softGreen: '#A8E6CF',
+            lavender: '#E6E6FA'
+        };
+
+        boxChart.setOption({
+            title: { text: '四个季度不同部门销售业绩对比' },
+            xAxis: { type: 'category', data: ['销售部', '市场部'] },
+            yAxis: { type: 'value', name: '业绩指数(万元)' },
+            series: [{
+                name: '季度业绩',
+                type: 'boxplot',
+                data: [
+                    {
+                        value: [120, 145, 132, 150, 138, 142, 155, 128, 135, 140, 148, 152],
+                        itemStyle: {
+                            color: colors.happyBlue,
+                            borderColor: '#5C4033'
+                        }
+                    },
+                    {
+                        value: [95, 110, 105, 115, 100, 108, 112, 98, 102, 107, 113, 118],
+                        itemStyle: {
+                            color: colors.irisPurple,
+                            borderColor: '#5C4033'
+                        }
+                    }
+                ]
+            }]
+        });
+
+        // 更新其他图表颜色
+        lineChart.setOption({
+            color: [colors.happyBlue, colors.irisPurple],
+            series: [
+                { lineStyle: { width: 3 } },
+                { lineStyle: { width: 3 } }
+            ]
+        });
+
+        barChart.setOption({
+            color: '#7CB9E8', // 烟海蓝色
+            series: [{ itemStyle: { color: '#7CB9E8' } }]
+        });
+
+        pieChart.setOption({
+            color: [colors.happyBlue, colors.irisPurple, colors.peach, 
+                   colors.softGreen, colors.lavender, '#FFB347', '#77DD77', '#B39EB5'],
+            series: [{
+                itemStyle: {
+                    borderColor: '#FFF',
+                    borderWidth: 2
+                }
+            }]
+        });
+
+        scatterChart.setOption({
+            color: colors.irisPurple,
+            series: [{
+                itemStyle: {
+                    color: colors.irisPurple,
+                    opacity: 0.8
+                }
+            }]
+        });
+
+        radarChart.setOption({
+            color: [colors.happyBlue, colors.irisPurple, colors.peach],
+            series: [{
+                areaStyle: {
+                    opacity: 0.3
+                },
+                lineStyle: {
+                    width: 2
+                }
+            }]
+        });
+
+        // 设置堆积面积图
+        areaChart.setOption({
+            title: { text: '2018-2022年中国新能源汽车市场份额' },
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'cross',
+                    label: {
+                        backgroundColor: '#6a7985'
+                    }
+                }
+            },
+            legend: {
+                data: ['纯电动汽车', '插电式混合动力', '普通混合动力']
+            },
+            toolbox: {
+                feature: {
+                    saveAsImage: {}
+                }
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            xAxis: [
+                {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: ['2018', '2019', '2020', '2021', '2022']
+                }
+            ],
+            yAxis: [
+                {
+                    type: 'value',
+                    name: '市场份额(%)'
+                }
+            ],
+            series: [
+                {
+                    name: '纯电动汽车',
+                    type: 'line',
+                    stack: '总量',
+                    lineStyle: {
+                        width: 3,
+                        color: colors.happyBlue
+                    },
+                    areaStyle: {
+                        color: colors.happyBlue,
+                        opacity: 0.6
+                    },
+                    emphasis: {
+                        focus: 'series',
+                        areaStyle: {
+                            opacity: 0.9
+                        },
+                        label: {
+                            show: true,
+                            fontWeight: 'bold',
+                            fontSize: 14,
+                            color: '#fff',
+                            backgroundColor: 'rgba(0,0,0,0.7)',
+                            padding: [3, 5],
+                            borderRadius: 4
+                        }
+                    },
+                    data: [45, 58, 67, 75, 82],
+                    label: {
+                        show: true,
+                        position: 'top',
+                        color: '#333',
+                        distance: 10,
+                        rotate: 30,
+                        align: 'center',
+                        verticalAlign: 'middle',
+                        formatter: function(params) {
+                            // 只显示大于50的值，避免小数值重叠
+                            return params.value > 50 ? params.value : '';
+                        }
+                    }
+                },
+                {
+                    name: '插电式混合动力',
+                    type: 'line',
+                    stack: '总量',
+                    areaStyle: {
+                        color: colors.irisPurple,
+                        opacity: 0.8
+                    },
+                    emphasis: {
+                        focus: 'series'
+                    },
+                    data: [30, 35, 40, 48, 55],
+                    label: {
+                        show: true,
+                        position: 'top',
+                        color: '#333',
+                        distance: 10,
+                        rotate: 30,
+                        align: 'center',
+                        verticalAlign: 'middle',
+                        formatter: function(params) {
+                            return params.value > 30 ? params.value : '';
+                        }
+                    }
+                },
+                {
+                    name: '普通混合动力',
+                    type: 'line',
+                    stack: '总量',
+                    areaStyle: {
+                        color: colors.peach,
+                        opacity: 0.8
+                    },
+                    emphasis: {
+                        focus: 'series'
+                    },
+                    data: [25, 30, 35, 42, 48],
+                    label: {
+                        show: true,
+                        position: 'top',
+                        color: '#333',
+                        distance: 10,
+                        rotate: 30,
+                        align: 'center',
+                        verticalAlign: 'middle',
+                        formatter: function(params) {
+                            return params.value > 30 ? params.value : '';
+                        }
+                    }
+                }
+            ]
+        });
+
+        // 设置直方图
+        function renderHistogram(data, bins) {
+            // 计算数据的最小值和最大值
+            const min = Math.min(...data);
+            const max = Math.max(...data);
+            
+            // 计算每个区间的宽度
+            const binWidth = (max - min) / bins;
+            
+            // 创建区间
+            const intervals = Array.from({length: bins}, (_, i) => {
+                const start = min + i * binWidth;
+                const end = min + (i + 1) * binWidth;
+                return [start, end];
+            });
+            
+            // 计算每个区间的频率
+            const frequencies = Array(bins).fill(0);
+            data.forEach(value => {
+                for (let i = 0; i < intervals.length; i++) {
+                    const [start, end] = intervals[i];
+                    if (value >= start && (value < end || (i === intervals.length - 1 && value <= end))) {
+                        frequencies[i]++;
+                        break;
+                    }
+                }
+            });
+            
+            // 创建X轴标签
+            const xAxisLabels = intervals.map(([start, end]) => {
+                return `${start.toFixed(0)}-${end.toFixed(0)}`;
+            });
+            
+            histogramChart.setOption({
+                title: { text: '某高校学生成绩分布' },
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        const interval = xAxisLabels[params[0].dataIndex];
+                        const frequency = params[0].value;
+                        return `分数区间: ${interval}<br/>学生人数: ${frequency}`;
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    data: xAxisLabels,
+                    name: '分数区间'
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '学生人数'
+                },
+                series: [{
+                    name: '频率',
+                    type: 'bar',
+                    data: frequencies,
+                    itemStyle: {
+                        color: colors.softGreen,
+                        borderColor: '#5C4033',
+                        borderWidth: 1
+                    },
+                    barWidth: '90%',
+                    emphasis: {
+                        itemStyle: {
+                            color: colors.irisPurple
+                        }
+                    }
+                }]
+            });
+        }
+
+        // 设置条形图
+        barGraphChart.setOption({
+            title: { text: '2023年各省GDP对比' },
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'shadow'
+                }
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'value',
+                name: 'GDP(万亿元)'
+            },
+            yAxis: {
+                type: 'category',
+                data: ['广东', '江苏', '山东', '浙江', '河南', '四川', '湖北', '福建'],
+                name: '省份'
+            },
+            series: [{
+                name: 'GDP',
+                type: 'bar',
+                data: [12.91, 12.29, 8.74, 7.77, 6.13, 5.67, 5.37, 5.31],
+                itemStyle: {
+                    color: colors.happyBlue
+                },
+                label: {
+                    show: true,
+                    position: 'right'
+                }
+            }]
+        });
+
+        // 更新条形图函数
+        function updateBarGraphChart() {
+            const data = document.getElementById('barGraphData').value.split(',').map(Number);
+            const labels = document.getElementById('barGraphLabels').value.split(',');
+            
+            barGraphChart.setOption({
+                yAxis: {
+                    data: labels
+                },
+                series: [{
+                    data: data
+                }]
+            });
+        }
+
+        // 初始化直方图
+        const initialHistogramData = document.getElementById('histogramData').value.split(',').map(Number);
+        const initialBins = parseInt(document.getElementById('histogramBins').value);
+        renderHistogram(initialHistogramData, initialBins);
+
+        // 更新图表函数
+        function updateLineChart() {
+            const maxTemp = document.getElementById('lineMaxTemp').value.split(',').map(Number);
+            const minTemp = document.getElementById('lineMinTemp').value.split(',').map(Number);
+            
+            lineChart.setOption({
+                series: [
+                    { data: maxTemp },
+                    { data: minTemp }
+                ]
+            });
+        }
+
+        function updateBarChart() {
+            const data = document.getElementById('barData').value.split(',').map(Number);
+            const labels = document.getElementById('barLabels').value.split(',');
+            
+            barChart.setOption({
+                xAxis: { data: labels },
+                series: [{ data: data }]
+            });
+        }
+
+        function updatePieChart() {
+            const values = document.getElementById('pieValues').value.split(',').map(Number);
+            const labels = document.getElementById('pieLabels').value.split(',');
+            const data = values.map((value, i) => ({ value, name: labels[i] }));
+            
+            pieChart.setOption({
+                series: [{ data: data }]
+            });
+        }
+
+        function updateScatterChart() {
+            const points = document.getElementById('scatterData').value.split(';').map(pair => {
+                const [x, y] = pair.split(',').map(Number);
+                return [x, y];
+            });
+            
+            scatterChart.setOption({
+                series: [{ data: points }]
+            });
+        }
+
+        function updateRadarChart() {
+            const data1 = document.getElementById('radarData1').value.split(',').map(Number);
+            const data2 = document.getElementById('radarData2').value.split(',').map(Number);
+            const data3 = document.getElementById('radarData3').value.split(',').map(Number);
+            
+            radarChart.setOption({
+                series: [{
+                    data: [
+                        { value: data1, name: '测试1' },
+                        { value: data2, name: '测试2' },
+                        { value: data3, name: '测试3' }
+                    ]
+                }]
+            });
+        }
+
+        function updateBoxChart() {
+            const dataSales = document.getElementById('boxDataSales').value.split(',').map(Number);
+            const dataMarketing = document.getElementById('boxDataMarketing').value.split(',').map(Number);
+            
+            boxChart.setOption({
+                series: [{
+                    data: [
+                        { value: dataSales },
+                        { value: dataMarketing }
+                    ]
+                }]
+            });
+        }
+
+        function updateAreaChart() {
+            const dataEV = document.getElementById('areaDataEV').value.split(',').map(Number);
+            const dataPHEV = document.getElementById('areaDataPHEV').value.split(',').map(Number);
+            const dataHEV = document.getElementById('areaDataHEV').value.split(',').map(Number);
+            const labels = document.getElementById('areaLabels').value.split(',');
+            
+            areaChart.setOption({
+                xAxis: [
+                    {
+                        data: labels
+                    }
+                ],
+                series: [
+                    {
+                        name: '纯电动汽车',
+                        data: dataEV
+                    },
+                    {
+                        name: '插电式混合动力',
+                        data: dataPHEV
+                    },
+                    {
+                        name: '普通混合动力',
+                        data: dataHEV
+                    }
+                ]
+            });
+        }
+
+        function updateHistogramChart() {
+            const data = document.getElementById('histogramData').value.split(',').map(Number);
+            const bins = parseInt(document.getElementById('histogramBins').value);
+            renderHistogram(data, bins);
+        }
+
+        // 标签页切换函数
+        function openChart(evt, chartName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(chartName).style.display = "block";
+            evt.currentTarget.className += " active";
+            
+            // 调整图表大小
+            switch(chartName) {
+                case 'line': lineChart.resize(); break;
+                case 'bar': barChart.resize(); break;
+                case 'pie': pieChart.resize(); break;
+                case 'scatter': scatterChart.resize(); break;
+                case 'radar': radarChart.resize(); break;
+                case 'box': boxChart.resize(); break;
+                case 'area': areaChart.resize(); break;
+                case 'histogram': histogramChart.resize(); break;
+                case 'bargraph': barGraphChart.resize(); break;
+            }
+        }
+    </script>
+</body>
+</html>
