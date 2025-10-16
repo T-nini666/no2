@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第2章 数据可视化交互式教程</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>第2章 数据可视化交互式教程</h1>
+            <nav>
+                <button onclick="showSection('line')" class="nav-btn active">2.1 折线图</button>
+                <button onclick="showSection('bar')" class="nav-btn">2.2 柱形图</button>
+                <button onclick="showSection('horizontal')" class="nav-btn">2.3 条形图</button>
+                <button onclick="showSection('area')" class="nav-btn">2.4 面积图</button>
+                <button onclick="showSection('histogram')" class="nav-btn">2.5 直方图</button>
+                <button onclick="showSection('pie')" class="nav-btn">2.6 饼图</button>
+                <button onclick="showSection('scatter')" class="nav-btn">2.7 散点图</button>
+                <button onclick="showSection('box')" class="nav-btn">2.8 箱形图</button>
+                <button onclick="showSection('radar')" class="nav-btn">2.9 雷达图</button>
+                <button onclick="showSection('error')" class="nav-btn">2.10 误差棒图</button>
+            </nav>
+        </header>
+
+        <!-- 数据管理面板 -->
+        <div class="data-management">
+            <button onclick="exportAllData()" class="btn-secondary">导出数据</button>
+            <button onclick="importData()" class="btn-secondary">导入数据</button>
+            <button onclick="resetAllData()" class="btn-secondary">重置数据</button>
+        </div>
+
+        <!-- 2.1 折线图 -->
+        <section id="line" class="chart-section active">
+            <div class="section-content">
+                <div class="controls">
+                    <h3>参数控制</h3>
+                    <div class="control-group">
+                        <label for="tempVariation">温度波动范围:</label>
+                        <input type="range" id="tempVariation" min="0.5" max="2" step="0.1" value="1">
+                        <span id="tempVariationValue">1</span>
+                    </div>
+                    <button onclick="updateLineChart()" class="btn-primary">更新图表</button>
+                    <button onclick="openDataEditor('lineChart')" class="btn-secondary">编辑数据</button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="lineChartCanvas"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2.2 柱形图 -->
+        <section id="bar" class="chart-section">
+            <div class="section-content">
+                <div class="controls">
+                    <h3>参数控制</h3>
+                    <div class="control-group">
+                        <label for="chartType">图表类型:</label>
+                        <select id="chartType">
+                            <option value="normal">普通柱形图</option>
+                            <option value="grouped">分组柱形图</option>
+                            <option value="stacked">堆积柱形图</option>
+                        </select>
+                    </div>
+                    <button onclick="updateBarChart()" class="btn-primary">更新图表</button>
+                    <button onclick="openDataEditor('barChart')" class="btn-secondary">编辑数据</button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="barChartCanvas"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- 测试部分 -->
+        <section id="test" class="chart-section">
+            <div class="section-content">
+                <h2>🎉 网站测试成功！</h2>
+                <p>如果您能看到这个页面，说明部署成功了！</p>
+                <div class="chart-container">
+                    <canvas id="testCanvas" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 数据编辑模态框 -->
+    <div id="dataModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>编辑数据</h2>
+                <span class="close" onclick="closeDataModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="dataEditor"></div>
+                <div class="modal-buttons">
+                    <button onclick="applyDataChanges()" class="btn-primary">应用更改</button>
+                    <button onclick="closeDataModal()" class="btn-secondary">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 基础功能
+        let charts = {};
+        let currentSection = 'line';
+
+        function showSection(sectionName) {
+            // 隐藏所有section
+            document.querySelectorAll('.chart-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // 移除所有nav按钮的active类
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 显示目标section
+            document.getElementById(sectionName).classList.add('active');
+            
+            // 激活对应的nav按钮
+            event.target.classList.add('active');
+            
+            currentSection = sectionName;
+            
+            // 初始化对应的图表
+            setTimeout(() => {
+                if (sectionName === 'line') updateLineChart();
+                else if (sectionName === 'bar') updateBarChart();
+            }, 100);
+        }
+
+        // 折线图
+        function updateLineChart() {
+            const ctx = document.getElementById('lineChartCanvas').getContext('2d');
+            const variation = parseFloat(document.getElementById('tempVariation').value);
+            document.getElementById('tempVariationValue').textContent = variation;
+            
+            const days = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+            const baseMax = [28, 30, 32, 35, 33, 29, 27, 26, 28, 31, 24, 21];
+            const baseMin = [15, 17, 19, 21, 20, 18, 19, 14, 16, 17, 15, 12];
+            
+            const maxTemp = baseMax.map(temp => temp * variation);
+            const minTemp = baseMin.map(temp => temp * variation);
+
+            if (charts.lineChart) {
+                charts.lineChart.destroy();
+            }
+
+            charts.lineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: days.map(d => d + '日'),
+                    datasets: [{
+                        label: '最高气温',
+                        data: maxTemp,
+                        borderColor: '#ff6b6b',
+                        backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: '最低气温',
+                        data: minTemp,
+                        borderColor: '#4ecdc4',
+                        backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '未来15天气温变化趋势'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: '温度 (°C)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 柱形图
+        function updateBarChart() {
+            const ctx = document.getElementById('barChartCanvas').getContext('2d');
+            const chartType = document.getElementById('chartType').value;
+            
+            const labels = ['2020财年', '2021财年', '2022财年', '2023财年', '2024财年'];
+            const gmvData = [65000, 78000, 89000, 95000, 102000];
+
+            if (charts.barChart) {
+                charts.barChart.destroy();
+            }
+
+            let datasets = [];
+            if (chartType === 'normal') {
+                datasets = [{
+                    label: 'GMV (亿元)',
+                    data: gmvData,
+                    backgroundColor: '#667eea'
+                }];
+            } else if (chartType === 'grouped') {
+                datasets = [{
+                    label: '淘宝GMV',
+                    data: gmvData.map(v => v * 0.6),
+                    backgroundColor: '#ff6b6b'
+                }, {
+                    label: '天猫GMV',
+                    data: gmvData.map(v => v * 0.4),
+                    backgroundColor: '#4ecdc4'
+                }];
+            } else if (chartType === 'stacked') {
+                datasets = [{
+                    label: '淘宝GMV',
+                    data: gmvData.map(v => v * 0.6),
+                    backgroundColor: '#ff6b6b'
+                }, {
+                    label: '天猫GMV',
+                    data: gmvData.map(v => v * 0.4),
+                    backgroundColor: '#4ecdc4'
+                }];
+            }
+
+            charts.barChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '阿里巴巴GMV统计'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: chartType === 'stacked'
+                        },
+                        y: {
+                            stacked: chartType === 'stacked',
+                            title: {
+                                display: true,
+                                text: 'GMV (亿元)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 数据管理功能（简化版）
+        function exportAllData() {
+            alert('导出功能演示：数据将保存为JSON文件');
+        }
+
+        function importData() {
+            alert('导入功能演示：请选择JSON数据文件');
+        }
+
+        function resetAllData() {
+            alert('重置功能演示：所有数据已恢复默认值');
+            updateLineChart();
+            updateBarChart();
+        }
+
+        function openDataEditor(chartType) {
+            alert('数据编辑功能演示：将打开' + chartType + '的数据编辑器');
+        }
+
+        function closeDataModal() {
+            document.getElementById('dataModal').style.display = 'none';
+        }
+
+        function applyDataChanges() {
+            alert('数据更改已应用');
+            closeDataModal();
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateLineChart();
+        });
+
+        // 测试画布绘制
+        window.addEventListener('load', function() {
+            const testCanvas = document.getElementById('testCanvas');
+            if (testCanvas) {
+                const ctx = testCanvas.getContext('2d');
+                ctx.fillStyle = '#667eea';
+                ctx.fillRect(50, 50, 100, 50);
+                ctx.fillStyle = '#ff6b6b';
+                ctx.fillRect(200, 50, 100, 50);
+                ctx.fillStyle = '#4ecdc4';
+                ctx.fillRect(125, 120, 100, 50);
+                
+                ctx.fillStyle = '#333';
+                ctx.font = '16px Arial';
+                ctx.fillText('部署成功！', 150, 40);
+            }
+        });
+    </script>
+</body>
+</html>
