@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据可视化交互展示 - 第2章完整实现</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .theme-selector {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .theme-selector h3 {
+            margin-bottom: 15px;
+            color: #4a5568;
+        }
+        
+        .theme-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .theme-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            background: #f7fafc;
+            color: #4a5568;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .theme-btn.active {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .tabs-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            overflow-x: auto;
+        }
+        
+        .tab-btn {
+            padding: 15px 25px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: #4a5568;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab-btn.active {
+            background: white;
+            color: #2d3748;
+            border-bottom-color: #2d3748;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 30px;
+            min-height: 600px;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .chart-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .chart-title {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            color: #2d3748;
+            border-left: 4px solid #2d3748;
+            padding-left: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chart-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            background: white;
+            color: #4a5568;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+        
+        .action-btn:hover {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+        }
+        
+        .action-btn.active {
+            background: #2d3748;
+            color: white;
+            border-color: #2d3748;
+        }
+        
+        .chart {
+            width: 100%;
+            height: 500px;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+        
+        .controls {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-group h4 {
+            margin-bottom: 10px;
+            color: #2d3748;
+            font-size: 1.1rem;
+        }
+        
+        .data-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .data-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            background: #2d3748;
+            color: white;
+        }
+        
+        .btn:hover {
+            background: #4a5568;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(45, 55, 72, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .description {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #2d3748;
+            line-height: 1.5;
+        }
+        
+        /* 新增样式 */
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .chart-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            background: white;
+            color: #4a5568;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+        
+        .action-btn:hover {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+        }
+        
+        .action-btn.active {
+            background: #2d3748;
+            color: white;
+            border-color: #2d3748;
+        }
+        
+        .usage-guide {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #2d3748;
+            line-height: 1.5;
+            border-left: 4px solid #38a169;
+        }
+        
+        .usage-guide h4 {
+            margin-bottom: 10px;
+            color: #2d3748;
+            font-size: 1rem;
+        }
+        
+        @media (max-width: 1024px) {
+            .chart-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart {
+                height: 400px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .tab-content {
+                padding: 20px;
+            }
+            
+            .chart {
+                height: 300px;
+            }
+            
+            .theme-buttons {
+                justify-content: center;
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 数据可视化交互展示</h1>
+            <p>基于第2章内容的完整可视化实现</p>
+        </div>
+        
+        <div class="theme-selector">
+            <h3>🎨 选择主题配色</h3>
+            <div class="theme-buttons">
+                <button class="theme-btn active" onclick="changeTheme('default')">默认主题</button>
+                <button class="theme-btn" onclick="changeTheme('dark')">深色主题</button>
+                <button class="theme-btn" onclick="changeTheme('blue')">蓝色主题</button>
+                <button class="theme-btn" onclick="changeTheme('green')">绿色主题</button>
+                <button class="theme-btn" onclick="changeTheme('purple')">紫色主题</button>
+            </div>
+        </div>
+        
+        <div class="tabs-container">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="openTab('line')">📈 折线图</button>
+                <button class="tab-btn" onclick="openTab('bar')">📊 柱形图</button>
+                <button class="tab-btn" onclick="openTab('horizontal-bar')">📋 条形图</button>
+                <button class="tab-btn" onclick="openTab('area')">🔺 面积图</button>
+                <button class="tab-btn" onclick="openTab('histogram')">📏 直方图</button>
+                <button class="tab-btn" onclick="openTab('pie')">🥧 饼图</button>
+                <button class="tab-btn" onclick="openTab('scatter')">🔵 散点图</button>
+                <button class="tab-btn" onclick="openTab('box')">📦 箱形图</button>
+                <button class="tab-btn" onclick="openTab('radar')">🎯 雷达图</button>
+                <button class="tab-btn" onclick="openTab('errorbar')">📏 误差棒图</button>
+            </div>
+            
+            <!-- 折线图 -->
+            <div id="line" class="tab-content active">
+                <div class="chart-section">
+                    <div class="chart-container">
+                        <div class="chart-title">
+                            <span>未来15天最高气温和最低气温</span>
+                            <div class="chart-actions">
+                                <button class="action-btn" onclick="downloadChart('lineChart')">📥 下载图片</button>
+                            </div>
+                        </div>
+                        <div id="lineChart" class="chart"></div>
+                        <div class="usage-guide">
+                            <h4>📋 适合数据类型</h4>
+                            <p>时间序列数据、连续变化趋势、多个系列的对比分析</p>
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <div class="control-group">
+                            <h4>最高气温数据</h4>
+                            <textarea class="data-input" id="lineMaxData">32,33,34,34,33,31,30,29,30,29,26,23,21,25,31</textarea>
+                        </div>
+                        <div class="control-group">
+                            <h4>最低气温数据</h4>
+                            <textarea class="data-input" id="lineMinData">19,19,20,22,22,21,22,16,18,18,17,14,15,16,16</textarea>
+                        </div>
+                        <button class="btn" onclick="updateLineChart()">更新图表</button>
+                        <div class="description">
+                            <strong>说明：</strong> 折线图用于显示数据随时间或其他连续变量的变化趋势。可以同时显示多条折线进行比较分析。
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 柱形图 -->
+            <div id="bar" class="tab-content">
+                <div class="chart-section">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">2013-2019财年阿里巴巴GMV</h3>
+                            <div class="chart-actions">
+                                <button class="action-btn" onclick="downloadChart('barChart')">📥 下载图片</button>
+                            </div>
+                        </div>
+                        <div id="barChart" class="chart"></div>
+                        <div class="usage-guide">
+                            <h4>📋 适合数据类型</h4>
+                            <p>分类数据对比、离散数值比较、时间段统计</p>
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <div class="control-group">
+                            <h4>GMV数据（亿元）</h4>
+                            <textarea class="data-input" id="barData">10770,16780,24440,30920,37670,48200,57270</textarea>
+                        </div>
+                        <button class="btn" onclick="updateBarChart()">更新图表</button>
+                        <div class="description">
+                            <strong>说明：</strong> 柱形图用于比较不同类别的数值大小。适合展示离散数据的对比关系。
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 条形图 -->
+            <div id="horizontal-bar" class="tab-content">
+                <div class="chart-section">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">各商品种类的网购替代率</h3>
+                            <div class="chart-actions">
+                                <button class="action-btn" onclick="downloadChart('horizontalBarChart')">📥 下载图片</button>
+                            </div>
+                        </div>
+                        <div id="horizontalBarChart" class="chart"></div>
+                        <div class="usage-guide">
+                            <h4>📋 适合数据类型</h4>
+                            <p>类别名称较长的分类数据、多个类别排名对比</p>
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <div class="control-group">
+                            <h4>替代率数据</h4>
+                            <textarea class="data-input" id="barhData">0.959,0.951,0.935,0.924,0.893,0.892,0.865,0.863,0.860,0.856,0.854,0.835,0.826,0.816,0.798,0.765,0.763,0.67</textarea>
+                        </div>
+                        <button class="btn" onclick="updateHorizontalBarChart()">更新图表</button>
+                        <div class="description">
+                            <strong>说明：</strong> 条形图是柱形图的横向版本，特别适合类别名称较长或类别数量较多的情况。
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 堆积面积图 -->
+            <div id="area" class="tab-content">
+                <div class="chart-section">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">物流公司费用趋势图</h3>
+                            <div class="chart-actions">
+                                <button class="action-btn" onclick="downloadChart('areaChart')">📥 下载图片</button>
+                            </div>
+                        </div>
+                        <div id="areaChart" class="chart"></div>
+                        <div class="usage-guide">
+                            <h4>📋 适合数据类型</h4>
+                            <p>时间序列的累计数据、多个部分占总量比例的变化</p>
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <div class="control-group">
+                            <h4>公司A费用</h4>
+                            <textarea class="data-input" id="areaData1">198,215,245,222,200,236,201,253,236,200,266,290</textarea>
+                        </div>
+                        <div class="control-group">
+                            <h4>公司B费用</h4>
+                            <textarea class="data-input" id="areaData2">203,236,200,236,269,216,298,333,301,349,360,368</textarea>
+                        </div>
+                        <div class="control-group">
+                            <h4>公司C费用</h4>
+                            <textarea class="data-input" id="areaData3">185,205,226,199,238,200,250,209,246,219,253,288</textarea>
+                        </div>
+                        <button class="btn" onclick="updateAreaChart()">更新图表</button>
+                        <div class="description">
+                            <strong>说明：</strong> 堆积面积图显示各部分数据随时间的变化趋势，同时展示总量的变化和各部分的占比关系。
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 直方图 -->
+            <div id="histogram" class="tab-content">
+                <div class="chart-section">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">人脸识别的灰度直方图</h3>
+                            <div class="chart-actions">
+                                <button class="action-btn" onclick="downloadChart('histogramChart')">📥 下载图片</button>
+                            </div>
+                        </div>
+                        <div id="histogramChart" class="chart"></div>
+                        <div class="usage-guide">
+                            <h4>📋 适合数据类型</h4>
+                            <p>连续数据的分布分析、频率统计、数据集中趋势观察</p>
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <div class="control-group">
+                            <h4>随机数据（10000个点）</h4>
+                            <textarea class="data-input" id="histogramData" readonly>正态分布随机数据，自动生成</textarea>
+                        </div>
+                        <div class="control-group">
+                            <h4>分组数量</h4>
+                            <input type="number" class="data-input" id="binsCount" value="25" min="5" max="50">
+                        </div>
+                        <button class="btn" onclick="updateHistogramChart()">重新生成</button>
+                        <div class="description">
+                            <strong>说明：</strong> 直方图用于展示数据的分布情况，显示数据在不同区间内的频率分布。
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 饼图 -->
+            <div id="pie" class="tab-content">
+                <div class="chart-section">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">支付宝月账单报告</h3>
+                            <div class="chart-actions">
+                                <button class="action-btn pie-type-btn" onclick="togglePieChartType()">🥧 饼图</button>
+                                <button class="action-btn" onclick="downloadChart('pieChart')">📥 下载图片</button>
+                            </div>
+                        </div>
+                        <div id="pieChart" class="chart"></div>
+                        <div class="usage-guide">
+                            <h4>📋 适合数据类型</h4>
+                            <p>占比分析、部分与整体关系、分类数据的比例分布</p>
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <div class="control-group">
+                            <h4>消费类别占比</h4>
+                            <textarea class="data-input" id="pieData">800,100,1000,200,300,200,200,200</textarea>
+                        </div>
+                        <button class="btn" onclick="updatePieChart()">更新图表</button>
+                        <div class="description">
+                            <strong>说明：</strong> 饼图用于显示各部分占总体的比例关系，适合展示分类数据的占比情况。
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 散点图 -->
+            <div id="scatter" class="tab-content">
+                <div class="chart-section">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">汽车速度与制动距离的关系</h3>
+                            <div class="chart-actions">
+                                <button class="action-btn" onclick="downloadChart('scatterChart')">📥 下载图片</button>
+                            </div>
+                        </div>
+                        <div id="scatterChart" class="chart"></div>
+                        <div class="usage-guide">
+                            <h4>📋 适合数据类型</h4>
+                            <p>两个变量间的相关性分析、数据分布模式、异常值检测</p>
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <div class="control-group">
+                            <h4>速度数据（km/h）</h4>
+                            <textarea class="data-input" id="scatterX">10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200</textarea>
+                        </div>
+                        <div class="control-group">
+                            <h4>制动距离（米）</h4>
+                            <textarea class="data-input" id="scatterY">0.5,2.0,4.4,7.9,12.3,17.7,24.1,31.5,39.9,49.2,59.5,70.8,83.1,96.4,110.7,126.0,142.2,159.4,177.6,196.8</textarea>
+                        </div>
+                        <button class="btn" onclick="updateScatterChart()">更新图表</button>
+                        <div class="description">
+                            <strong>说明：</strong> 散点图用于展示两个变量之间的关系，可以观察变量之间的相关性或分布模式。
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 箱形图 -->
+            <div id="box" class="tab-content">
+                <div class="chart-section">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">2017年和2018年全国发电量统计</h3>
+                            <div class="chart-actions">
+                                <button class="action-btn" onclick="downloadChart('boxChart')">📥 下载图片</button>
+                            </div>
+                        </div>
+                        <div id="boxChart" class="chart"></div>
+                        <div class="usage-guide">
+                            <h4>📋 适合数据类型</h4>
+                            <p>数据分布统计、异常值检测、多组数据比较、四分位数分析</p>
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <div class="control-group">
+                            <h4>2018年发电量</h4>
+                            <textarea class="data-input" id="boxData2018">5200,5254.5,5283.4,5107.8,5443.3,5550.6,6400.2,6404.9,5483.1,5330.2,5543,6199.9</textarea>
+                        </div>
+                        <div class="control-group">
+                            <h4>2017年发电量</h4>
+                            <textarea class="data-input" id="boxData2017">4605.2,4710.3,5168.9,4767.2,4947,5203,6047.4,5945.5,5219.6,5038.1,5196.3,5698.6</textarea>
+                        </div>
+                        <button class="btn" onclick="updateBoxChart()">更新图表</button>
+                        <div class="description">
+                            <strong>说明：</strong> 箱形图展示数据的分布情况，包括中位数、四分位数、异常值等统计信息。
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 雷达图 -->
+            <div id="radar" class="tab-content">
+                <div class="chart-section">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">霍兰德职业兴趣测试</h3>
+                            <div class="chart-actions">
+                                <button class="action-btn" onclick="downloadChart('radarChart')">📥 下载图片</button>
+                            </div>
+                        </div>
+                        <div id="radarChart" class="chart"></div>
+                        <div class="usage-guide">
+                            <h4>📋 适合数据类型</h4>
+                            <p>多维数据对比、能力评估、多指标综合评价</p>
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <div class="control-group">
+                            <h4>研究型(I)数据</h4>
+                            <textarea class="data-input" id="radarData1">0.40,0.85,0.43,0.30,0.20,0.34</textarea>
+                        </div>
+                        <div class="control-group">
+                            <h4>艺术型(A)数据</h4>
+                            <textarea class="data-input" id="radarData2">0.32,0.35,0.89,0.25,0.38,0.31</textarea>
+                        </div>
+                        <div class="control-group">
+                            <h4>社会型(S)数据</h4>
+                            <textarea class="data-input" id="radarData3">0.35,0.30,0.30,0.48,0.87,0.38</textarea>
+                        </div>
+                        <div class="control-group">
+                            <h4>企业型(E)数据</h4>
+                            <textarea class="data-input" id="radarData4">0.30,0.40,0.28,0.85,0.45,0.40</textarea>
+                        </div>
+                        <div class="control-group">
+                            <h4>传统型(C)数据</h4>
+                            <textarea class="data-input" id="radarData5">0.30,0.40,0.22,0.45,0.32,0.92</textarea>
+                        </div>
+                        <div class="control-group">
+                            <h4>现实型(R)数据</h4>
+                            <textarea class="data-input" id="radarData6">0.88,0.30,0.30,0.40,0.28,0.28</textarea>
+                        </div>
+                        <button class="btn" onclick="updateRadarChart()">更新图表</button>
+                        <div class="description">
+                            <strong>说明：</strong> 雷达图用于展示多维度数据，适合比较多个对象在多个维度上的表现。
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 误差棒图 -->
+            <div id="errorbar" class="tab-content">
+                <div class="chart-section">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">4个树种不同季节的细根生物量</h3>
+                            <div class="chart-actions">
+                                <button class="action-btn" onclick="downloadChart('errorbarChart')">📥 下载图片</button>
+                            </div>
+                        </div>
+                        <div id="errorbarChart" class="chart"></div>
+                        <div class="usage-guide">
+                            <h4>📋 适合数据类型</h4>
+                            <p>实验数据统计、测量不确定性表示、多组数据均值比较</p>
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <div class="control-group">
+                            <h4>树种A数据（春季,夏季,秋季）</h4>
+                            <textarea class="data-input" id="errorbarSpeciesA">2.04,1.57,1.63</textarea>
+                        </div>
+                        <div class="control-group">
+                            <h4>树种B数据（春季,夏季,秋季）</h4>
+                            <textarea class="data-input" id="errorbarSpeciesB">1.69,1.61,1.64</textarea>
+                        </div>
+                        <div class="control-group">
+                            <h4>树种C数据（春季,夏季,秋季）</h4>
+                            <textarea class="data-input" id="errorbarSpeciesC">4.65,4.99,4.94</textarea>
+                        </div>
+                        <div class="control-group">
+                            <h4>树种D数据（春季,夏季,秋季）</h4>
+                            <textarea class="data-input" id="errorbarSpeciesD">3.39,2.33,4.10</textarea>
+                        </div>
+                        <div class="control-group">
+                            <h4>树种A误差（春季,夏季,秋季）</h4>
+                            <textarea class="data-input" id="errorbarErrorA">0.16,0.08,0.10</textarea>
+                        </div>
+                        <div class="control-group">
+                            <h4>树种B误差（春季,夏季,秋季）</h4>
+                            <textarea class="data-input" id="errorbarErrorB">0.27,0.14,0.14</textarea>
+                        </div>
+                        <div class="control-group">
+                            <h4>树种C误差（春季,夏季,秋季）</h4>
+                            <textarea class="data-input" id="errorbarErrorC">0.34,0.32,0.29</textarea>
+                        </div>
+                        <div class="control-group">
+                            <h4>树种D误差（春季,夏季,秋季）</h4>
+                            <textarea class="data-input" id="errorbarErrorD">0.23,0.23,0.39</textarea>
+                        </div>
+                        <button class="btn" onclick="updateErrorbarChart()">更新图表</button>
+                        <div class="description">
+                            <strong>说明：</strong> 误差棒图展示数据的平均值和变异程度，用于表示测量的不确定性。
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 主题配置
+        const themes = {
+            default: {
+                primary: '#667eea',
+                secondary: '#764ba2',
+                background: 'linear-gradient(135deg, #FFF8DC 0%, #FDF5E6 100%)',
+                chartColors: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3', '#54A0FF', '#5f27cd']
+            },
+            dark: {
+                primary: '#805AD5',
+                secondary: '#6B46C1',
+                background: 'linear-gradient(135deg, #2D3748 0%, #4A5568 100%)',
+                chartColors: ['#63B3ED', '#68D391', '#FBB6CE', '#FED7D7', '#BEE3F8', '#C6F6D5', '#E9D8FD', '#9AE6B4']
+            },
+            blue: {
+                primary: '#3182CE',
+                secondary: '#2C5AA0',
+                background: 'linear-gradient(135deg, #3182CE 0%, #2C5AA0 100%)',
+                chartColors: ['#4299E1', '#48BB78', '#ED8936', '#9F7AEA', '#F56565', '#38B2AC', '#ECC94B', '#667EEA']
+            },
+            green: {
+                primary: '#38A169',
+                secondary: '#2F855A',
+                background: 'linear-gradient(135deg, #38A169 0%, #2F855A 100%)',
+                chartColors: ['#48BB78', '#4299E1', '#ED8936', '#9F7AEA', '#F56565', '#38B2AC', '#ECC94B', '#68D391']
+            },
+            purple: {
+                primary: '#805AD5',
+                secondary: '#6B46C1',
+                background: 'linear-gradient(135deg, #805AD5 0%, #6B46C1 100%)',
+                chartColors: ['#9F7AEA', '#4299E1', '#48BB78', '#ED8936', '#F56565', '#38B2AC', '#ECC94B', '#B794F4']
+            }
+        };
+
+        let currentTheme = 'default';
+        let charts = {};
+        let pieChartType = 'pie'; // 'pie' 或 'doughnut'
+
+        // 饼图类型切换函数 - 饼图和圆环图切换
+        function togglePieChartType() {
+            // 在饼图和圆环图之间切换
+            pieChartType = pieChartType === 'pie' ? 'doughnut' : 'pie';
+            updatePieChart();
+            
+            // 更新按钮状态
+            const pieBtn = document.querySelector('.pie-type-btn');
+            if (pieBtn) {
+                pieBtn.textContent = pieChartType === 'pie' ? '🥧 饼图' : '🍩 圆环图';
+                pieBtn.classList.toggle('active', pieChartType === 'doughnut');
+                
+                // 添加简单的动画效果，让用户知道按钮被点击了
+                pieBtn.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    pieBtn.style.transform = 'scale(1)';
+                }, 100);
+            }
+        }
+
+        // 初始化所有图表
+        function initCharts() {
+            if (typeof echarts === 'undefined') {
+                console.error('ECharts库加载失败');
+                return;
+            }
+
+            // 初始化所有图表实例
+            const chartIds = [
+                'lineChart', 'barChart', 'horizontalBarChart', 'areaChart',
+                'histogramChart', 'pieChart', 'scatterChart', 'boxChart',
+                'radarChart', 'errorbarChart'
+            ];
+
+            chartIds.forEach(id => {
+                charts[id] = echarts.init(document.getElementById(id));
+            });
+
+            // 设置初始图表数据
+            updateAllCharts();
+        }
+
+        // 更新所有图表
+        function updateAllCharts() {
+            updateLineChart();
+            updateBarChart();
+            updateHorizontalBarChart();
+            updateAreaChart();
+            updateHistogramChart();
+            updatePieChart();
+            updateScatterChart();
+            updateBoxChart();
+            updateRadarChart();
+            updateErrorbarChart();
+        }
+
+        // 主题切换
+        function changeTheme(theme) {
+            currentTheme = theme;
+            const colors = themes[theme];
+            
+            // 更新主题按钮状态
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 更新页面样式
+            document.body.style.background = colors.background;
+            document.querySelectorAll('.btn').forEach(btn => {
+                btn.style.background = colors.primary;
+            });
+            
+            // 更新图表主题
+            updateAllCharts();
+        }
+
+        // 标签页切换
+        function openTab(tabName) {
+            // 隐藏所有标签内容
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 移除所有标签按钮的激活状态
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 显示选中的标签内容
+            document.getElementById(tabName).classList.add('active');
+            event.currentTarget.classList.add('active');
+            
+            // 调整图表大小
+            setTimeout(() => {
+                Object.values(charts).forEach(chart => {
+                    if (chart) chart.resize();
+                });
+            }, 100);
+        }
+
+        // 各个图表的更新函数
+        function updateLineChart() {
+            const maxData = document.getElementById('lineMaxData').value.split(',').map(Number);
+            const minData = document.getElementById('lineMinData').value.split(',').map(Number);
+            const xData = Array.from({length: maxData.length}, (_, i) => i + 1);
+            
+            charts.lineChart.setOption({
+                color: [themes[currentTheme].chartColors[0], themes[currentTheme].chartColors[1]],
+                title: { text: '未来15天最高气温和最低气温', left: 'center' },
+                tooltip: { trigger: 'axis' },
+                legend: { data: ['最高气温', '最低气温'], top: 30 },
+                grid: { top: 80, bottom: 30 },
+                xAxis: {
+                    type: 'category',
+                    data: xData,
+                    name: '天数'
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '温度 (°C)'
+                },
+                series: [
+                    {
+                        name: '最高气温',
+                        type: 'line',
+                        data: maxData,
+                        smooth: true,
+                        lineStyle: { width: 3 }
+                    },
+                    {
+                        name: '最低气温',
+                        type: 'line',
+                        data: minData,
+                        smooth: true,
+                        lineStyle: { width: 3 }
+                    }
+                ]
+            });
+        }
+
+        function updateBarChart() {
+            const data = document.getElementById('barData').value.split(',').map(Number);
+            const labels = ["2013", "2014", "2015", "2016", "2017", "2018", "2019"];
+            
+            charts.barChart.setOption({
+                color: themes[currentTheme].chartColors[0],
+                title: { text: '2013-2019财年阿里巴巴GMV', left: 'center' },
+                tooltip: { trigger: 'axis' },
+                grid: { top: 60, bottom: 30 },
+                xAxis: {
+                    type: 'category',
+                    data: labels,
+                    name: '年份'
+                },
+                yAxis: {
+                    type: 'value',
+                    name: 'GMV (亿元)'
+                },
+                series: [{
+                    type: 'bar',
+                    data: data,
+                    itemStyle: {
+                        borderRadius: [4, 4, 0, 0]
+                    }
+                }]
+            });
+        }
+
+        // 条形图更新函数
+        function updateHorizontalBarChart() {
+            const data = document.getElementById('barhData').value.split(',').map(Number);
+            const labels = [
+                "家政、家教、保姆等生活服务", "飞机票、火车票", "家具", "手机、手机配件",
+                "计算机及其配套产品", "汽车用品", "通信充值、游戏充值", "个人护理用品",
+                "书报杂志及音像制品", "餐饮、旅游、住宿", "家用电器",
+                "食品、饮料、烟酒、保健品", "家庭日杂用品", "保险、演出票务",
+                "服装、鞋帽、家用纺织品", "数码产品", "其他商品和服务", "工艺品、收藏品"
+            ];
+            
+            charts.horizontalBarChart.setOption({
+                color: themes[currentTheme].chartColors[0],
+                title: { text: '各商品种类的网购替代率', left: 'center' },
+                tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                grid: { left: '20%', right: '10%', bottom: '15%' },
+                xAxis: {
+                    type: 'value',
+                    name: '替代率',
+                    min: 0,
+                    max: 1
+                },
+                yAxis: {
+                    type: 'category',
+                    data: labels,
+                    axisLabel: { interval: 0, rotate: 30 }
+                },
+                series: [{
+                    type: 'bar',
+                    data: data,
+                    label: { show: true, position: 'right', formatter: '{c}' }
+                }]
+            });
+        }
+
+        // 面积图更新函数
+        function updateAreaChart() {
+            const data1 = document.getElementById('areaData1').value.split(',').map(Number);
+            const data2 = document.getElementById('areaData2').value.split(',').map(Number);
+            const data3 = document.getElementById('areaData3').value.split(',').map(Number);
+            const xData = Array.from({length: 12}, (_, i) => i + 1);
+            
+            charts.areaChart.setOption({
+                color: themes[currentTheme].chartColors.slice(0, 3),
+                title: { text: '物流公司物流费用统计', left: 'center' },
+                tooltip: { trigger: 'axis' },
+                legend: { data: ['公司A', '公司B', '公司C'], top: 30 },
+                grid: { top: 80, bottom: 30 },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: xData,
+                    name: '月份'
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '费用'
+                },
+                series: [
+                    {
+                        name: '公司A',
+                        type: 'line',
+                        stack: '总量',
+                        areaStyle: {},
+                        data: data1
+                    },
+                    {
+                        name: '公司B',
+                        type: 'line',
+                        stack: '总量',
+                        areaStyle: {},
+                        data: data2
+                    },
+                    {
+                        name: '公司C',
+                        type: 'line',
+                        stack: '总量',
+                        areaStyle: {},
+                        data: data3
+                    }
+                ]
+            });
+        }
+
+        // 直方图更新函数
+        function updateHistogramChart() {
+            const bins = parseInt(document.getElementById('binsCount').value) || 25;
+            // 生成正态分布随机数据
+            const randomData = Array.from({length: 10000}, () => {
+                let u = 0, v = 0;
+                while(u === 0) u = Math.random();
+                while(v === 0) v = Math.random();
+                return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+            });
+            
+            const histogramData = calculateHistogramData(randomData, bins, -4, 4);
+            const binLabels = Array.from({length: bins}, (_, i) => {
+                const binStart = -4 + (8 / bins) * i;
+                const binEnd = binStart + (8 / bins);
+                return `${binStart.toFixed(1)}-${binEnd.toFixed(1)}`;
+            });
+            
+            charts.histogramChart.setOption({
+                color: themes[currentTheme].chartColors[0],
+                title: { text: '人脸识别的灰度直方图', left: 'center' },
+                tooltip: { 
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        const index = params[0].dataIndex;
+                        return `${binLabels[index]}<br/>频率: ${params[0].value}`;
+                    }
+                },
+                grid: { top: 60, bottom: 30 },
+                xAxis: {
+                    type: 'category',
+                    data: binLabels,
+                    name: '灰度值区间',
+                    axisLabel: { rotate: 45 }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '频率'
+                },
+                series: [{
+                    name: '频率分布',
+                    type: 'bar',
+                    data: histogramData,
+                    barWidth: '80%'
+                }]
+            });
+        }
+
+        // 计算直方图数据
+        function calculateHistogramData(data, bins, min, max) {
+            const binSize = (max - min) / bins;
+            const histogram = Array(bins).fill(0);
+            
+            data.forEach(value => {
+                if (value >= min && value <= max) {
+                    const binIndex = Math.floor((value - min) / binSize);
+                    if (binIndex >= 0 && binIndex < bins) {
+                        histogram[binIndex]++;
+                    }
+                }
+            });
+            
+            return histogram;
+        }
+
+        // 饼图更新函数
+        function updatePieChart() {
+            const data = document.getElementById('pieData').value.split(',').map(Number);
+            const labels = ['购物', '人情往来', '餐饮美食', '通信物流', '生活日用', '交通出行', '休闲娱乐', '其他'];
+            
+            // 根据当前饼图类型设置半径
+            const radius = pieChartType === 'pie' ? '70%' : ['40%', '70%'];
+            
+            charts.pieChart.setOption({
+                color: themes[currentTheme].chartColors,
+                title: { 
+                    text: pieChartType === 'pie' ? '支付宝月账单报告（饼图）' : '支付宝月账单报告（圆环图）', 
+                    left: 'center' 
+                },
+                tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c} ({d}%)' },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left',
+                    top: 'middle',
+                    data: labels
+                },
+                series: [{
+                    name: '消费类别',
+                    type: 'pie',
+                    radius: radius,
+                    center: ['60%', '50%'],
+                    data: labels.map((label, index) => ({
+                        value: data[index],
+                        name: label
+                    })),
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }]
+            });
+        }
+
+        // 散点图更新函数
+        function updateScatterChart() {
+            const xData = document.getElementById('scatterX').value.split(',').map(Number);
+            const yData = document.getElementById('scatterY').value.split(',').map(Number);
+            
+            charts.scatterChart.setOption({
+                color: themes[currentTheme].chartColors[0],
+                title: { text: '汽车速度与制动距离的关系', left: 'center' },
+                tooltip: { trigger: 'item', formatter: '速度: {c0} km/h<br>距离: {c1} 米' },
+                grid: { top: 60, bottom: 30 },
+                xAxis: {
+                    type: 'value',
+                    name: '速度 (km/h)'
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '制动距离 (米)'
+                },
+                series: [{
+                    type: 'scatter',
+                    data: xData.map((x, i) => [x, yData[i]]),
+                    symbolSize: 10
+                }]
+            });
+        }
+
+        // 箱形图更新函数
+        function updateBoxChart() {
+            const data2018 = document.getElementById('boxData2018').value.split(',').map(Number);
+            const data2017 = document.getElementById('boxData2017').value.split(',').map(Number);
+            
+            // 准备箱型图数据
+            const boxplotData2018 = prepareBoxplotData(data2018);
+            const boxplotData2017 = prepareBoxplotData(data2017);
+            
+            // 组合数据：每个x轴位置对应一个箱型图数据
+            const boxplotData = [boxplotData2018, boxplotData2017];
+            
+            charts.boxChart.setOption({
+                color: [themes[currentTheme].chartColors[0], themes[currentTheme].chartColors[1]],
+                title: { text: '2017年和2018年全国发电量统计', left: 'center' },
+                tooltip: { 
+                    trigger: 'item',
+                    formatter: function(params) {
+                        const data = params.data;
+                        const year = params.name === '2018年' ? '2018年' : '2017年';
+                        return `${year}<br/>
+                                最小值: ${data[1]}<br/>
+                                下四分位数: ${data[2]}<br/>
+                                中位数: ${data[3]}<br/>
+                                上四分位数: ${data[4]}<br/>
+                                最大值: ${data[5]}`;
+                    }
+                },
+                legend: { data: ['2018年', '2017年'], top: 30 },
+                grid: { top: 80, bottom: 30 },
+                xAxis: {
+                    type: 'category',
+                    data: ['2018年', '2017年']
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '发电量 (亿千瓦时)'
+                },
+                series: [{
+                    name: '发电量统计',
+                    type: 'boxplot',
+                    data: boxplotData
+                }]
+            });
+        }
+
+        // 准备箱形图数据（符合ECharts格式）
+        function prepareBoxplotData(data) {
+            if (data.length === 0) return [0, 0, 0, 0, 0, 0];
+            
+            data.sort((a, b) => a - b);
+            const min = Math.min(...data);
+            const max = Math.max(...data);
+            
+            // 计算四分位数（使用线性插值法）
+            const q1 = calculateQuantile(data, 0.25);
+            const median = calculateQuantile(data, 0.5);
+            const q3 = calculateQuantile(data, 0.75);
+            
+            // ECharts boxplot数据格式：[min, Q1, median, Q3, max]
+            return [min, q1, median, q3, max];
+        }
+
+        // 计算分位数（线性插值法）
+        function calculateQuantile(data, p) {
+            if (data.length === 0) return 0;
+            if (p <= 0) return data[0];
+            if (p >= 1) return data[data.length - 1];
+            
+            const index = p * (data.length - 1);
+            const lowerIndex = Math.floor(index);
+            const upperIndex = Math.ceil(index);
+            
+            if (lowerIndex === upperIndex) {
+                return data[lowerIndex];
+            }
+            
+            // 线性插值
+            const weight = index - lowerIndex;
+            return data[lowerIndex] * (1 - weight) + data[upperIndex] * weight;
+        }
+
+        // 雷达图更新函数
+        function updateRadarChart() {
+            // 获取每个维度的数据
+            const data1 = document.getElementById('radarData1').value.split(',').map(Number);
+            const data2 = document.getElementById('radarData2').value.split(',').map(Number);
+            const data3 = document.getElementById('radarData3').value.split(',').map(Number);
+            const data4 = document.getElementById('radarData4').value.split(',').map(Number);
+            const data5 = document.getElementById('radarData5').value.split(',').map(Number);
+            const data6 = document.getElementById('radarData6').value.split(',').map(Number);
+            
+            const indicators = ['研究型(I)', '艺术型(A)', '社会型(S)', '企业型(E)', '传统型(C)', '现实型(R)'];
+            const testersCount = Math.max(data1.length, data2.length, data3.length, data4.length, data5.length, data6.length);
+            
+            // 重新组织数据：每个测试者对应6个维度的数据
+            const validDataArrays = [];
+            for (let i = 0; i < testersCount; i++) {
+                const testerData = [
+                    data1[i] || 0,
+                    data2[i] || 0,
+                    data3[i] || 0,
+                    data4[i] || 0,
+                    data5[i] || 0,
+                    data6[i] || 0
+                ];
+                validDataArrays.push(testerData);
+            }
+            
+            charts.radarChart.setOption({
+                color: themes[currentTheme].chartColors.slice(0, validDataArrays.length),
+                title: { text: '霍兰德职业兴趣测试', left: 'center' },
+                tooltip: { trigger: 'item' },
+                legend: {
+                    data: validDataArrays.map((_, index) => `测试者${index + 1}`),
+                    top: 30,
+                    right: 10
+                },
+                radar: {
+                    shape: 'circle',
+                    center: ['50%', '55%'],
+                    radius: '60%',
+                    indicator: indicators.map(indicator => ({ 
+                        name: indicator, 
+                        max: 1 
+                    }))
+                },
+                series: [{
+                    type: 'radar',
+                    data: validDataArrays.map((data, index) => ({
+                        value: data,
+                        name: `测试者${index + 1}`,
+                        areaStyle: {},
+                        lineStyle: {
+                            width: 2
+                        }
+                    }))
+                }]
+            });
+        }
+
+        // 误差棒图更新函数（柱形图+误差棒版本）
+        function updateErrorbarChart() {
+            // 获取每个树种的数据
+            const speciesAData = document.getElementById('errorbarSpeciesA').value.split(',').map(Number);
+            const speciesBData = document.getElementById('errorbarSpeciesB').value.split(',').map(Number);
+            const speciesCData = document.getElementById('errorbarSpeciesC').value.split(',').map(Number);
+            const speciesDData = document.getElementById('errorbarSpeciesD').value.split(',').map(Number);
+            
+            // 获取每个树种的误差数据
+            const speciesAError = document.getElementById('errorbarErrorA').value.split(',').map(Number);
+            const speciesBError = document.getElementById('errorbarErrorB').value.split(',').map(Number);
+            const speciesCError = document.getElementById('errorbarErrorC').value.split(',').map(Number);
+            const speciesDError = document.getElementById('errorbarErrorD').value.split(',').map(Number);
+            
+            const seasons = ['春季', '夏季', '秋季'];
+            const species = ['树种A', '树种B', '树种C', '树种D'];
+            const meansArrays = [speciesAData, speciesBData, speciesCData, speciesDData];
+            const errorsArrays = [speciesAError, speciesBError, speciesCError, speciesDError];
+            
+            // 创建柱形图系列和误差棒系列
+            const allSeries = species.map((specie, index) => {
+                const means = meansArrays[index];
+                const errors = errorsArrays[index];
+                
+                // 为每个数据点创建误差棒数据格式 [下限, 上限]
+                const errorBarData = means.map((mean, i) => {
+                    return [mean - errors[i], mean + errors[i]];
+                });
+                
+                return [
+                    // 柱形图系列
+                    {
+                        name: specie,
+                        type: 'bar',
+                        data: means,
+                        itemStyle: {
+                            color: themes[currentTheme].chartColors[index]
+                        },
+                        barWidth: '15%',
+                        barGap: '30%',
+                        barCategoryGap: '20%'
+                    },
+                    // 误差棒系列
+                    {
+                        name: specie + '误差',
+                        type: 'custom',
+                        data: errorBarData,
+                        renderItem: function(params, api) {
+                            const dataIndex = params.dataIndex;
+                            const errorMin = api.value(0); // 误差下限
+                            const errorMax = api.value(1); // 误差上限
+                            
+                            // 获取坐标点
+                            const highPoint = api.coord([errorMax, dataIndex]);
+                            const lowPoint = api.coord([errorMin, dataIndex]);
+                            
+                            // 获取柱形图位置信息
+                            const categoryIndex = params.dataIndex; // 季节索引
+                            const seriesIndex = params.seriesIndex; // 系列索引
+                            
+                            // 计算误差棒宽度（比柱形图稍宽）
+                            const errorBarWidth = 8;
+                            
+                            return {
+                                type: 'group',
+                                children: [
+                                    // 上误差线（顶部横线）
+                                    {
+                                        type: 'line',
+                                        shape: {
+                                            x1: highPoint[0] - errorBarWidth/2,
+                                            y1: highPoint[1],
+                                            x2: highPoint[0] + errorBarWidth/2,
+                                            y2: highPoint[1]
+                                        },
+                                        style: {
+                                            stroke: themes[currentTheme].chartColors[index],
+                                            lineWidth: 2
+                                        }
+                                    },
+                                    // 下误差线（底部横线）
+                                    {
+                                        type: 'line',
+                                        shape: {
+                                            x1: lowPoint[0] - errorBarWidth/2,
+                                            y1: lowPoint[1],
+                                            x2: lowPoint[0] + errorBarWidth/2,
+                                            y2: lowPoint[1]
+                                        },
+                                        style: {
+                                            stroke: themes[currentTheme].chartColors[index],
+                                            lineWidth: 2
+                                        }
+                                    },
+                                    // 连接线（垂直线）
+                                    {
+                                        type: 'line',
+                                        shape: {
+                                            x1: highPoint[0],
+                                            y1: highPoint[1],
+                                            x2: lowPoint[0],
+                                            y2: lowPoint[1]
+                                        },
+                                        style: {
+                                            stroke: themes[currentTheme].chartColors[index],
+                                            lineWidth: 1
+                                        }
+                                    }
+                                ]
+                            };
+                        },
+                        z: 100 // 确保误差棒在柱形图上方
+                    }
+                ];
+            }).flat(); // 将嵌套数组展开为一维数组
+            
+            charts.errorbarChart.setOption({
+                color: themes[currentTheme].chartColors.slice(0, 4),
+                title: { text: '4个树种不同季节的细根生物量', left: 'center' },
+                tooltip: { 
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        // 找到对应的树种和季节数据
+                        const barSeries = params.filter(p => !p.seriesName.includes('误差'));
+                        let result = '';
+                        
+                        barSeries.forEach(param => {
+                            const specieIndex = species.indexOf(param.seriesName);
+                            const seasonIndex = param.dataIndex;
+                            const mean = meansArrays[specieIndex][seasonIndex];
+                            const error = errorsArrays[specieIndex][seasonIndex];
+                            
+                            result += `${param.seriesName} - ${seasons[seasonIndex]}<br/>
+                                        平均值: ${mean.toFixed(2)} g/m²<br/>
+                                        误差范围: ${(mean - error).toFixed(2)} ~ ${(mean + error).toFixed(2)} g/m²<br/><br/>`;
+                        });
+                        
+                        return result;
+                    }
+                },
+                legend: { 
+                    data: species, 
+                    top: 30 
+                },
+                grid: { 
+                    top: 80, 
+                    bottom: 30,
+                    left: 50,
+                    right: 50
+                },
+                xAxis: {
+                    type: 'category',
+                    data: seasons,
+                    name: '季节',
+                    axisTick: {
+                        alignWithLabel: true
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '细根生物量 (g/m²)',
+                    min: 0
+                },
+                series: allSeries
+            });
+        }
+
+        // 图表下载功能
+        function downloadChart(chartId) {
+            const chart = charts[chartId];
+            if (!chart) {
+                alert('图表未初始化，请稍后重试');
+                return;
+            }
+            
+            try {
+                // 获取图表数据URL
+                const dataURL = chart.getDataURL({
+                    type: 'png',
+                    pixelRatio: 2,
+                    backgroundColor: '#fff'
+                });
+                
+                // 创建下载链接
+                const link = document.createElement('a');
+                link.download = `${chartId}_${new Date().getTime()}.png`;
+                link.href = dataURL;
+                
+                // 触发下载
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+            } catch (error) {
+                console.error('下载图表失败:', error);
+                alert('下载图表失败，请检查浏览器兼容性');
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 尝试加载ECharts
+            if (typeof echarts !== 'undefined') {
+                initCharts();
+            } else {
+                // 如果CDN加载失败，使用备用方案
+                const script = document.createElement('script');
+                script.src = 'https://fastly.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js';
+                script.onload = initCharts;
+                document.head.appendChild(script);
+            }
+            
+            // 窗口大小变化时调整图表
+            window.addEventListener('resize', function() {
+                Object.values(charts).forEach(chart => {
+                    if (chart) chart.resize();
+                });
+            });
+        });
+    </script>
+</body>
+</html>                                },
+                                {
+                                    xAxis: i + 0.15,
+                                    yAxis: mean + error
+                                },
+                                {
+                                    xAxis: i - 0.15,
+                                    yAxis: mean - error
+                                },
+                                {
+                                    xAxis: i + 0.15,
+                                    yAxis: mean - error
+                                },
+                                {
+                                    xAxis: i,
+                                    yAxis: mean - error
+                                },
+                                {
+                                    xAxis: i,
+                                    yAxis: mean + error
+                                }
+                            ];
+                        })
+                    }
+                };
+            });
+            
+            charts.errorbarChart.setOption({
+                color: themes[currentTheme].chartColors.slice(0, 4),
+                title: { text: '4个树种不同季节的细根生物量', left: 'center' },
+                tooltip: { 
+                    trigger: 'item',
+                    formatter: function(params) {
+                        if (params.seriesName.includes('误差')) {
+                            // 误差棒tooltip
+                            const specie = params.seriesName.replace('误差', '');
+                            const specieIndex = species.indexOf(specie);
+                            const seasonIndex = params.dataIndex;
+                            const mean = meansArrays[specieIndex][seasonIndex];
+                            const error = errorsArrays[specieIndex][seasonIndex];
+                            
+                            return `${specie} - ${seasons[seasonIndex]}<br/>
+                                    平均值: ${mean.toFixed(2)} g/m²<br/>
+                                    误差: ±${error.toFixed(2)} g/m²`;
+                        } else {
+                            // 柱形图tooltip
+                            const specie = params.seriesName;
+                            const specieIndex = species.indexOf(specie);
+                            const seasonIndex = params.dataIndex;
+                            const mean = meansArrays[specieIndex][seasonIndex];
+                            const error = errorsArrays[specieIndex][seasonIndex];
+                            
+                            return `${specie} - ${seasons[seasonIndex]}<br/>
+                                    平均值: ${mean.toFixed(2)} g/m²<br/>
+                                    误差: ±${error.toFixed(2)} g/m²`;
+                        }
+                    }
+                },
+                legend: { 
+                    data: species,
+                    top: 30
+                },
+                grid: { top: 80, bottom: 30 },
+                xAxis: {
+                    type: 'category',
+                    data: seasons,
+                    name: '季节',
+                    axisTick: {
+                        alignWithLabel: true
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '生物量 (g/m²)',
+                    min: 0
+                },
+                series: allSeries
+            });
+        }
+
+        // 图表下载功能
+        function downloadChart(chartId) {
+            const chart = charts[chartId];
+            if (!chart) {
+                alert('图表未初始化，请稍后重试');
+                return;
+            }
+            
+            try {
+                // 获取图表数据URL
+                const dataURL = chart.getDataURL({
+                    type: 'png',
+                    pixelRatio: 2,
+                    backgroundColor: '#fff'
+                });
+                
+                // 创建下载链接
+                const link = document.createElement('a');
+                link.download = `${chartId}_${new Date().getTime()}.png`;
+                link.href = dataURL;
+                
+                // 触发下载
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+            } catch (error) {
+                console.error('下载图表失败:', error);
+                alert('下载图表失败，请检查浏览器兼容性');
+            }
+        }
+
+        // 图表下载功能
+        function downloadChart(chartId) {
+            const chart = charts[chartId];
+            if (!chart) {
+                alert('图表未初始化，请稍后重试');
+                return;
+            }
+            
+            try {
+                // 获取图表数据URL
+                const dataURL = chart.getDataURL({
+                    type: 'png',
+                    pixelRatio: 2,
+                    backgroundColor: '#fff'
+                });
+                
+                // 创建下载链接
+                const link = document.createElement('a');
+                link.download = `${chartId}_${new Date().getTime()}.png`;
+                link.href = dataURL;
+                
+                // 触发下载
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+            } catch (error) {
+                console.error('下载图表失败:', error);
+                alert('下载图表失败，请检查浏览器兼容性');
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 尝试加载ECharts
+            if (typeof echarts !== 'undefined') {
+                initCharts();
+            } else {
+                // 如果CDN加载失败，使用备用方案
+                const script = document.createElement('script');
+                script.src = 'https://fastly.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js';
+                script.onload = initCharts;
+                document.head.appendChild(script);
+            }
+            
+            // 窗口大小变化时调整图表
+            window.addEventListener('resize', function() {
+                Object.values(charts).forEach(chart => {
+                    if (chart) chart.resize();
+                });
+            });
+        });nction() {
+                Object.values(charts).forEach(chart => {
+                    if (chart) chart.resize();
+                });
+            });
+        });nction() {
+                Object.values(charts).forEach(chart => {
+                    if (chart) chart.resize();
+                });
+            });
+        });
+    </script>
+</body>
+</html>
